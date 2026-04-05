@@ -37,7 +37,7 @@ button:active { transform: scale(0.95); }
 </style>
 </head>
 <body>
-<button id="fab" title="금융계산기">🏦</button>
+<button id="fab" title="금융계산기">🧮</button>
 <script>
 document.getElementById('fab').addEventListener('click', () => {
   window.pywebview.api.toggle_main();
