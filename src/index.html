@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=440">
+  <title>BNK 금융계산기</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css" rel="stylesheet">
+  <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== Title Bar ===== -->
+  <div class="title-bar">
+    <div class="title-bar__left">
+      <img class="title-bar__logo" src="img/favicon.ico" alt="BNK" id="titleLogo">
+      <span>금융계산기</span>
+    </div>
+    <div class="title-bar__actions">
+      <button class="title-bar__btn title-bar__btn--settings" id="btnSettings" title="정책변수 설정">⚙ 정책변수</button>
+      <button class="title-bar__btn title-bar__btn--theme" id="btnThemeToggle" title="다크모드 전환">☀</button>
+      <button class="title-bar__btn" title="새 창" onclick="window.open(location.href)">+</button>
+      <button class="title-bar__btn" title="최소화">&#8211;</button>
+      <button class="title-bar__btn" title="닫기">&times;</button>
+    </div>
+  </div>
+
+  <!-- ===== Tab Navigation ===== -->
+  <div class="tab-nav-wrap" id="tabNavWrap">
+    <div style="display:flex">
+      <nav class="tab-nav" id="tabNav">
+        <button class="tab-nav__item active" data-tab="deposit">예금</button>
+        <button class="tab-nav__item" data-tab="savings">적금</button>
+        <button class="tab-nav__item" data-tab="loan">대출</button>
+        <button class="tab-nav__item" data-tab="mortgage">주담대종합</button>
+        <button class="tab-nav__item" data-tab="ltv">LTV</button>
+        <button class="tab-nav__item" data-tab="dti">DTI</button>
+        <button class="tab-nav__item" data-tab="dsr">DSR</button>
+        <button class="tab-nav__item" data-tab="prepay">중도상환</button>
+        <button class="tab-nav__item" data-tab="exchange">환전/송금</button>
+      </nav>
+      <button class="tab-nav__fixed-item" data-tab="history" id="tabHistoryBtn">이력</button>
+      <button class="tab-nav__menu-btn" id="megaMenuBtn" title="전체 메뉴">&#9662;</button>
+    </div>
+    <!-- Mega Menu (hover/click dropdown) -->
+    <div class="mega-menu" id="megaMenu">
+      <div class="mega-menu__section-title">전체 계산기</div>
+      <div class="mega-menu__grid" id="megaAllGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===== Content ===== -->
+  <div class="content">
+
+    <!-- ========== 예금 ========== -->
+    <div class="tab-panel active" id="panel-deposit">
+      <div class="card">
+        <div class="field">
+          <label class="field__label">예치금액</label>
+          <div class="input-wrap">
+            <input type="text" id="dep-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="dep-amount" data-add="100000">+10만</button>
+            <button class="quick-btn" data-target="dep-amount" data-add="1000000">+100만</button>
+            <button class="quick-btn" data-target="dep-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="dep-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">예금기간</label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="dep-period" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="toggle-group" data-field="dep-period-unit">
+              <button class="toggle-btn active" data-value="year">년</button>
+              <button class="toggle-btn" data-value="month">월</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">연이자율</label>
+          <div class="input-wrap">
+            <input type="text" id="dep-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">이자 방식</label>
+          <div class="toggle-group" data-field="dep-interest-type">
+            <button class="toggle-btn active" data-value="simple">단리</button>
+            <button class="toggle-btn" data-value="compound">월복리</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">이자과세</label>
+          <div class="toggle-group" data-field="dep-tax-type">
+            <button class="toggle-btn active" data-value="normal">일반과세<br><small>15.4%</small></button>
+            <button class="toggle-btn" data-value="exempt">비과세</button>
+            <button class="toggle-btn" data-value="prefer">세금우대<br><small>9.5%</small></button>
+            <button class="toggle-btn" data-value="low">저율과세<br><small>1.4%</small></button>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('deposit')">초기화</button>
+          <button class="btn btn--primary" onclick="calcDeposit()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="dep-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('dep-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body">
+          <div class="result-row">
+            <span class="result-row__label">예치금액 (원금)</span>
+            <span class="result-row__value" id="dep-r-principal"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-row__label">세전이자</span>
+            <span class="result-row__value" id="dep-r-interest"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-row__label">세금</span>
+            <span class="result-row__value result-row__value--red" id="dep-r-tax"></span>
+          </div>
+          <hr class="result-divider">
+          <div class="result-highlight">
+            <div class="result-highlight__label">세후 수령액</div>
+            <div class="result-highlight__value" id="dep-r-total"></div>
+          </div>
+        </div>
+        <div class="result-footer">
+          <span></span>
+          <button class="btn-memory" title="메모리에 저장">M+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 적금 ========== -->
+    <div class="tab-panel" id="panel-savings">
+      <div class="card">
+        <div class="field">
+          <label class="field__label">월 납입액</label>
+          <div class="input-wrap">
+            <input type="text" id="sav-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="sav-amount" data-add="100000">+10만</button>
+            <button class="quick-btn" data-target="sav-amount" data-add="1000000">+100만</button>
+            <button class="quick-btn" data-target="sav-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="sav-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">적립기간</label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="sav-period" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="toggle-group" data-field="sav-period-unit">
+              <button class="toggle-btn active" data-value="year">년</button>
+              <button class="toggle-btn" data-value="month">월</button>
+            </div>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="sav-period" data-add="1" data-unit="sav-period-unit">+1년</button>
+            <button class="quick-btn" data-target="sav-period" data-add="5" data-unit="sav-period-unit">+5년</button>
+            <button class="quick-btn" data-target="sav-period" data-add="10" data-unit="sav-period-unit">+10년</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">연이자율</label>
+          <div class="input-wrap">
+            <input type="text" id="sav-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">이자 방식</label>
+          <div class="toggle-group" data-field="sav-interest-type">
+            <button class="toggle-btn active" data-value="simple">단리</button>
+            <button class="toggle-btn" data-value="compound">월복리</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">이자과세</label>
+          <div class="toggle-group" data-field="sav-tax-type">
+            <button class="toggle-btn active" data-value="normal">일반과세<br><small>15.4%</small></button>
+            <button class="toggle-btn" data-value="exempt">비과세</button>
+            <button class="toggle-btn" data-value="prefer">세금우대<br><small>9.5%</small></button>
+            <button class="toggle-btn" data-value="low">저율과세<br><small>1.4%</small></button>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('savings')">초기화</button>
+          <button class="btn btn--primary" onclick="calcSavings()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="sav-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('sav-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body">
+          <div class="result-row">
+            <span class="result-row__label">총 납입액</span>
+            <span class="result-row__value" id="sav-r-principal"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-row__label">세전이자</span>
+            <span class="result-row__value" id="sav-r-interest"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-row__label">세금</span>
+            <span class="result-row__value result-row__value--red" id="sav-r-tax"></span>
+          </div>
+          <hr class="result-divider">
+          <div class="result-highlight">
+            <div class="result-highlight__label">총 수령액</div>
+            <div class="result-highlight__value" id="sav-r-total"></div>
+          </div>
+        </div>
+        <div class="result-footer">
+          <span></span>
+          <button class="btn-memory" title="메모리에 저장">M+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 대출 ========== -->
+    <div class="tab-panel" id="panel-loan">
+      <div class="card">
+        <div class="field">
+          <label class="field__label">대출금액</label>
+          <div class="input-wrap">
+            <input type="text" id="loan-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="loan-amount" data-add="100000">+10만</button>
+            <button class="quick-btn" data-target="loan-amount" data-add="1000000">+100만</button>
+            <button class="quick-btn" data-target="loan-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="loan-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출기간</label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="loan-period" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="toggle-group" data-field="loan-period-unit">
+              <button class="toggle-btn active" data-value="year">년</button>
+              <button class="toggle-btn" data-value="month">월</button>
+            </div>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="loan-period" data-add="1" data-unit="loan-period-unit">+1년</button>
+            <button class="quick-btn" data-target="loan-period" data-add="5" data-unit="loan-period-unit">+5년</button>
+            <button class="quick-btn" data-target="loan-period" data-add="10" data-unit="loan-period-unit">+10년</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출금리 (연)</label>
+          <div class="input-wrap">
+            <input type="text" id="loan-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">상환방법</label>
+          <div class="toggle-group" data-field="loan-repay-type" style="flex-wrap:wrap">
+            <button class="toggle-btn active" data-value="equal">원리금균등</button>
+            <button class="toggle-btn" data-value="principal">원금균등</button>
+            <button class="toggle-btn" data-value="bullet">만기일시</button>
+            <button class="toggle-btn" data-value="graduated">체증식</button>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('loan')">초기화</button>
+          <button class="btn btn--primary" onclick="calcLoan()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="loan-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('loan-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body">
+          <div class="result-row">
+            <span class="result-row__label">대출원금</span>
+            <span class="result-row__value" id="loan-r-principal"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-row__label">총 대출이자</span>
+            <span class="result-row__value result-row__value--red" id="loan-r-interest"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-row__label">총 상환금액</span>
+            <span class="result-row__value" id="loan-r-total-repay"></span>
+          </div>
+          <hr class="result-divider">
+          <div class="result-highlight">
+            <div class="result-highlight__label" id="loan-r-monthly-label">매월 상환금액</div>
+            <div class="result-highlight__value" id="loan-r-monthly"></div>
+          </div>
+        </div>
+        <div class="result-footer">
+          <button class="result-link" onclick="showSchedule()">월별 상환 스케줄 보기 &rsaquo;</button>
+          <button class="btn-memory" title="메모리에 저장">M+</button>
+        </div>
+      </div>
+      <div class="schedule-wrap" id="loan-schedule" style="display:none">
+        <div class="card">
+          <div class="card__title">월별 상환 스케줄</div>
+          <div class="schedule-table-wrap" id="loan-schedule-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 주담대 종합 ========== -->
+    <div class="tab-panel" id="panel-mortgage">
+      <div class="card">
+        <div class="section-header">담보 / 주택 정보</div>
+        <div class="field">
+          <label class="field__label">대출목적</label>
+          <div class="toggle-group" data-field="mort-purpose">
+            <button class="toggle-btn active" data-value="purchase">신규주택구입</button>
+            <button class="toggle-btn" data-value="living">생활안정자금</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">보유 주택 수</label>
+          <div class="toggle-group" data-field="mort-houses" style="flex-wrap:wrap">
+            <button class="toggle-btn" data-value="first">생애최초</button>
+            <button class="toggle-btn" data-value="low-income">서민실수요</button>
+            <button class="toggle-btn active" data-value="none">무주택</button>
+            <button class="toggle-btn" data-value="one">1주택</button>
+            <button class="toggle-btn" data-value="multi">2주택이상</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">규제지역 여부</label>
+          <div class="toggle-group" data-field="mort-regulated">
+            <button class="toggle-btn" data-value="regulated">규제지역(수도권)</button>
+            <button class="toggle-btn active" data-value="non-regulated">비규제지역</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">담보주택 시세</label>
+          <div class="input-wrap">
+            <input type="text" id="mort-house-price" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="mort-house-price" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="mort-house-price" data-add="100000000">+1억</button>
+            <button class="quick-btn" data-target="mort-house-price" data-add="500000000">+5억</button>
+          </div>
+        </div>
+
+        <div class="section-header">대출 조건</div>
+        <div class="field">
+          <label class="field__label">희망 대출금액</label>
+          <div class="input-wrap">
+            <input type="text" id="mort-loan-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="mort-loan-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="mort-loan-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출기간</label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="mort-period" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="toggle-group" data-field="mort-period-unit">
+              <button class="toggle-btn active" data-value="year">년</button>
+              <button class="toggle-btn" data-value="month">월</button>
+            </div>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="mort-period" data-set="10">10년</button>
+            <button class="quick-btn" data-target="mort-period" data-set="20">20년</button>
+            <button class="quick-btn" data-target="mort-period" data-set="30">30년</button>
+            <button class="quick-btn" data-target="mort-period" data-set="40">40년</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출금리 (연)</label>
+          <div class="input-wrap">
+            <input type="text" id="mort-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">상환방법</label>
+          <div class="toggle-group" data-field="mort-repay">
+            <button class="toggle-btn active" data-value="equal">원리금균등</button>
+            <button class="toggle-btn" data-value="principal">원금균등</button>
+            <button class="toggle-btn" data-value="bullet">만기일시</button>
+          </div>
+        </div>
+
+        <div class="section-header">소득 / 기존 대출</div>
+        <div class="field">
+          <label class="field__label">연소득</label>
+          <div class="input-wrap">
+            <input type="text" id="mort-income" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="mort-income" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="mort-income" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">기존 대출 연이자 상환액</label>
+          <div class="input-wrap">
+            <input type="text" id="mort-exist-interest" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">기존 대출 연원금 상환액</label>
+          <div class="input-wrap">
+            <input type="text" id="mort-exist-principal" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">소액임차보증금 <span class="badge-policy">정책변수</span></label>
+          <div class="input-wrap">
+            <input type="text" id="mort-small-deposit" placeholder="0" value="55,000,000" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+
+        <div class="section-header">스트레스 DSR</div>
+        <div class="field">
+          <label class="field__label">금리 유형</label>
+          <div class="toggle-group" data-field="mort-rate-type">
+            <button class="toggle-btn active" data-value="variable">변동형</button>
+            <button class="toggle-btn" data-value="mixed">혼합형</button>
+            <button class="toggle-btn" data-value="periodic">주기형</button>
+            <button class="toggle-btn" data-value="fixed">순수고정형</button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('mortgage')">초기화</button>
+          <button class="btn btn--primary" onclick="calcMortgage()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="mort-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('mort-result')">
+          종합 시뮬레이션 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body">
+          <div class="dash-grid" id="mort-dash"></div>
+          <div class="comp-limit" id="mort-comp-limit"></div>
+          <div class="disclaimer">
+            규정 기준일: 2026-04-05 | 현행 규정과 다를 수 있으므로 반드시 확인 후 안내하시기 바랍니다.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LTV ========== -->
+    <div class="tab-panel" id="panel-ltv">
+      <div class="card">
+        <div class="field">
+          <label class="field__label">대출목적</label>
+          <div class="toggle-group" data-field="ltv-purpose">
+            <button class="toggle-btn active" data-value="purchase">신규주택구입</button>
+            <button class="toggle-btn" data-value="living">생활안정자금</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">보유 주택 수</label>
+          <div class="toggle-group" data-field="ltv-houses" style="flex-wrap:wrap">
+            <button class="toggle-btn" data-value="first">생애최초</button>
+            <button class="toggle-btn" data-value="low-income">서민실수요</button>
+            <button class="toggle-btn active" data-value="none">무주택</button>
+            <button class="toggle-btn" data-value="one-dispose">1주택(처분조건부)</button>
+            <button class="toggle-btn" data-value="multi">2주택이상</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">규제지역 여부</label>
+          <div class="toggle-group" data-field="ltv-regulated">
+            <button class="toggle-btn" data-value="regulated">규제지역(수도권)</button>
+            <button class="toggle-btn active" data-value="non-regulated">비규제지역</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">담보주택 시세</label>
+          <div class="input-wrap">
+            <input type="text" id="ltv-house-price" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="ltv-house-price" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="ltv-house-price" data-add="100000000">+1억</button>
+            <button class="quick-btn" data-target="ltv-house-price" data-add="500000000">+5억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">보유 대출 잔액</label>
+          <div class="input-wrap">
+            <input type="text" id="ltv-existing-loan" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">소액임차보증금 <span class="badge-policy">정책변수</span></label>
+          <div class="input-wrap">
+            <input type="text" id="ltv-small-deposit" placeholder="0" value="55,000,000" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('ltv')">초기화</button>
+          <button class="btn btn--primary" onclick="calcLTV()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="ltv-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('ltv-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body" id="ltv-result-body"></div>
+      </div>
+    </div>
+
+    <!-- ========== DTI ========== -->
+    <div class="tab-panel" id="panel-dti">
+      <div class="card">
+        <div class="section-header">소득 정보</div>
+        <div class="field">
+          <label class="field__label">연소득</label>
+          <div class="input-wrap">
+            <input type="text" id="dti-income" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="dti-income" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="dti-income" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="section-header">신규 주택담보대출</div>
+        <div class="field">
+          <label class="field__label">대출금액</label>
+          <div class="input-wrap">
+            <input type="text" id="dti-loan-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="dti-loan-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="dti-loan-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출기간</label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="dti-period" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="toggle-group" data-field="dti-period-unit">
+              <button class="toggle-btn active" data-value="year">년</button>
+              <button class="toggle-btn" data-value="month">월</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출금리 (연)</label>
+          <div class="input-wrap">
+            <input type="text" id="dti-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">상환방법</label>
+          <div class="toggle-group" data-field="dti-repay">
+            <button class="toggle-btn active" data-value="equal">원리금균등</button>
+            <button class="toggle-btn" data-value="principal">원금균등</button>
+            <button class="toggle-btn" data-value="bullet">만기일시</button>
+          </div>
+        </div>
+        <div class="section-header">보유 대출 (신DTI)</div>
+        <div class="field">
+          <label class="field__label">보유 주담대 연원리금 상환액 <span class="field__label-hint">기존 주담대 원금+이자</span></label>
+          <div class="input-wrap">
+            <input type="text" id="dti-exist-mortgage" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">기타대출 연이자 상환액 <span class="field__label-hint">신용대출 등 이자만</span></label>
+          <div class="input-wrap">
+            <input type="text" id="dti-other-interest" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('dti')">초기화</button>
+          <button class="btn btn--primary" onclick="calcDTI()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="dti-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('dti-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body" id="dti-result-body"></div>
+      </div>
+    </div>
+
+    <!-- ========== DSR ========== -->
+    <div class="tab-panel" id="panel-dsr">
+      <div class="card">
+        <div class="section-header">소득 정보</div>
+        <div class="field">
+          <label class="field__label">연소득</label>
+          <div class="input-wrap">
+            <input type="text" id="dsr-income" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="dsr-income" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="dsr-income" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="section-header">신규 주택담보대출</div>
+        <div class="field">
+          <label class="field__label">대출금액</label>
+          <div class="input-wrap">
+            <input type="text" id="dsr-loan-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="dsr-loan-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="dsr-loan-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출기간</label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="dsr-period" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="toggle-group" data-field="dsr-period-unit">
+              <button class="toggle-btn active" data-value="year">년</button>
+              <button class="toggle-btn" data-value="month">월</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출금리 (연)</label>
+          <div class="input-wrap">
+            <input type="text" id="dsr-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">상환방법</label>
+          <div class="toggle-group" data-field="dsr-repay">
+            <button class="toggle-btn active" data-value="equal">원리금균등</button>
+            <button class="toggle-btn" data-value="principal">원금균등</button>
+            <button class="toggle-btn" data-value="bullet">만기일시</button>
+          </div>
+        </div>
+        <div class="section-header">보유 대출</div>
+        <div class="field">
+          <label class="field__label">보유대출 연이자 상환액</label>
+          <div class="input-wrap">
+            <input type="text" id="dsr-exist-interest" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">보유대출 연원금 상환액</label>
+          <div class="input-wrap">
+            <input type="text" id="dsr-exist-principal" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="section-header">스트레스 DSR</div>
+        <div class="field">
+          <label class="field__label">지역 구분</label>
+          <div class="toggle-group" data-field="dsr-region">
+            <button class="toggle-btn" data-value="capital">수도권·규제지역</button>
+            <button class="toggle-btn" data-value="local">지방</button>
+            <button class="toggle-btn active" data-value="other">기타(전국)</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">금리 유형</label>
+          <div class="toggle-group" data-field="dsr-rate-type">
+            <button class="toggle-btn active" data-value="variable">변동형</button>
+            <button class="toggle-btn" data-value="mixed">혼합형</button>
+            <button class="toggle-btn" data-value="periodic">주기형</button>
+            <button class="toggle-btn" data-value="fixed">순수고정형</button>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('dsr')">초기화</button>
+          <button class="btn btn--primary" onclick="calcDSR()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="dsr-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('dsr-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body" id="dsr-result-body"></div>
+      </div>
+    </div>
+
+    <!-- ========== 중도상환 ========== -->
+    <div class="tab-panel" id="panel-prepay">
+      <div class="card">
+        <div class="field">
+          <label class="field__label">상환금액</label>
+          <div class="input-wrap">
+            <input type="text" id="pre-amount" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="pre-amount" data-add="10000000">+1,000만</button>
+            <button class="quick-btn" data-target="pre-amount" data-add="100000000">+1억</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">수수료율 <span class="badge-policy">정책변수</span></label>
+          <div class="input-wrap">
+            <input type="text" id="pre-fee-rate" placeholder="0.00" value="0.58" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">대출일자</label>
+          <div class="input-wrap">
+            <input type="date" id="pre-loan-date">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">상환일자</label>
+          <div class="input-wrap">
+            <input type="date" id="pre-repay-date">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">수수료 부과기간 <span class="badge-policy">정책변수</span></label>
+          <div class="input-with-toggle">
+            <div class="input-wrap">
+              <input type="text" id="pre-fee-period" placeholder="3" value="3" inputmode="numeric">
+            </div>
+            <span class="input-wrap__suffix" style="padding:0 8px;color:var(--text-sub)">년</span>
+          </div>
+          <div class="quick-btns">
+            <button class="quick-btn" data-target="pre-fee-period" data-set="1">1년</button>
+            <button class="quick-btn" data-target="pre-fee-period" data-set="3">3년</button>
+            <button class="quick-btn" data-target="pre-fee-period" data-set="5">5년</button>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('prepay')">초기화</button>
+          <button class="btn btn--primary" onclick="calcPrepay()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="pre-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('pre-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body" id="pre-result-body"></div>
+      </div>
+    </div>
+
+    <!-- ========== 환전/송금 ========== -->
+    <div class="tab-panel" id="panel-exchange">
+      <div class="card">
+        <div class="field">
+          <label class="field__label">거래 종류</label>
+          <div class="toggle-group" data-field="ex-type" style="flex-wrap:wrap">
+            <button class="toggle-btn active" data-value="sell">환전(매도)</button>
+            <button class="toggle-btn" data-value="buy">환전(매입)</button>
+            <button class="toggle-btn" data-value="send">송금(보낼때)</button>
+            <button class="toggle-btn" data-value="receive">송금(받을때)</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">통화</label>
+          <div class="input-wrap">
+            <select id="ex-currency">
+              <option value="USD">USD (미국 달러)</option>
+              <option value="JPY">JPY (일본 엔)</option>
+              <option value="EUR">EUR (유로)</option>
+              <option value="CNY">CNY (중국 위안)</option>
+              <option value="GBP">GBP (영국 파운드)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">외화 금액</label>
+          <div class="input-wrap">
+            <input type="text" id="ex-foreign-amount" placeholder="0" inputmode="decimal">
+            <span class="input-wrap__suffix" id="ex-currency-suffix">USD</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">적용 환율</label>
+          <div class="input-wrap">
+            <input type="text" id="ex-rate" placeholder="0.00" inputmode="decimal">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">우대율</label>
+          <div class="input-wrap">
+            <input type="text" id="ex-discount" placeholder="0" value="0" inputmode="numeric">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field" id="ex-fee-field" style="display:none">
+          <label class="field__label">송금 수수료</label>
+          <div class="input-wrap">
+            <input type="text" id="ex-fee" placeholder="0" inputmode="numeric">
+            <span class="input-wrap__suffix">원</span>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--reset" onclick="resetForm('exchange')">초기화</button>
+          <button class="btn btn--primary" onclick="calcExchange()">계산하기</button>
+        </div>
+      </div>
+      <div class="result-card" id="ex-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('ex-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body" id="ex-result-body"></div>
+      </div>
+    </div>
+
+    <!-- ========== 이력 ========== -->
+    <div class="tab-panel" id="panel-history">
+      <div class="filter-bar">
+        <div class="toggle-group" data-field="hist-date">
+          <button class="toggle-btn active" data-value="today">오늘</button>
+          <button class="toggle-btn" data-value="week">이번주</button>
+          <button class="toggle-btn" data-value="month">이번달</button>
+          <button class="toggle-btn" data-value="all">전체</button>
+        </div>
+      </div>
+      <div id="history-list">
+        <div class="empty-state">
+          <div class="empty-state__icon">&#128196;</div>
+          <div class="empty-state__text">계산 이력이 없습니다</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- Recent Calculation Bar -->
+  <div class="recent-bar" id="recentBar">
+    <div class="recent-bar__title">최근 계산</div>
+    <div class="recent-bar__list" id="recentList"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ===== Settings Panel (Slide-over) ===== -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-panel">
+    <div class="settings-panel__header">
+      <span>정책변수 설정</span>
+      <button class="settings-panel__close" id="settingsClose">&times;</button>
+    </div>
+    <div class="settings-panel__body">
+
+      <div class="settings-notice">
+        &#9888; 아래 변수는 금융 정책에 따라 변경될 수 있습니다.<br>
+        최신 기준을 확인하시고, 필요 시 직접 수정하세요.
+      </div>
+
+      <!-- LTV 정책변수 -->
+      <div class="settings-section">
+        <div class="settings-section__title">LTV 비율 (%, 규제지역)</div>
+        <div class="settings-field">
+          <label class="settings-field__label">생애최초</label>
+          <div class="input-wrap"><input type="text" id="set-ltv-first" value="70" data-policy="ltv-first"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">서민실수요</label>
+          <div class="input-wrap"><input type="text" id="set-ltv-low" value="60" data-policy="ltv-low"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">무주택</label>
+          <div class="input-wrap"><input type="text" id="set-ltv-none" value="40" data-policy="ltv-none"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">1주택 (처분조건부)</label>
+          <div class="input-wrap"><input type="text" id="set-ltv-one" value="50" data-policy="ltv-one"></div>
+        </div>
+      </div>
+
+      <!-- 소액임차보증금 -->
+      <div class="settings-section">
+        <div class="settings-section__title">소액임차보증금 최우선변제금액 (만원)</div>
+        <div class="settings-field">
+          <label class="settings-field__label">서울</label>
+          <div class="input-wrap"><input type="text" id="set-small-seoul" value="5,500" data-policy="small-seoul"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">수도권 과밀억제권역</label>
+          <div class="input-wrap"><input type="text" id="set-small-capital" value="4,800" data-policy="small-capital"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">광역시/세종/안산/용인/김포/광주</label>
+          <div class="input-wrap"><input type="text" id="set-small-metro" value="2,800" data-policy="small-metro"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">기타</label>
+          <div class="input-wrap"><input type="text" id="set-small-other" value="2,000" data-policy="small-other"></div>
+        </div>
+      </div>
+
+      <!-- 스트레스 DSR -->
+      <div class="settings-section">
+        <div class="settings-section__title">스트레스 DSR 기본 가산금리 (%)</div>
+        <div class="settings-field">
+          <label class="settings-field__label">수도권/규제지역</label>
+          <div class="input-wrap"><input type="text" id="set-stress-capital" value="3.0" data-policy="stress-capital"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">지방</label>
+          <div class="input-wrap"><input type="text" id="set-stress-local" value="0.75" data-policy="stress-local"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">기타 (전국)</label>
+          <div class="input-wrap"><input type="text" id="set-stress-other" value="1.50" data-policy="stress-other"></div>
+        </div>
+        <div class="settings-field__hint">반기별 금융위원회 공시 (6월/12월)</div>
+      </div>
+
+      <!-- 중도상환수수료 -->
+      <div class="settings-section">
+        <div class="settings-section__title">중도상환수수료</div>
+        <div class="settings-field">
+          <label class="settings-field__label">기본 수수료율 (%)</label>
+          <div class="input-wrap"><input type="text" id="set-prepay-rate" value="0.58" data-policy="prepay-rate"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">기본 부과기간 (년)</label>
+          <div class="input-wrap"><input type="text" id="set-prepay-period" value="3" data-policy="prepay-period"></div>
+        </div>
+      </div>
+
+      <!-- DSR 한도 -->
+      <div class="settings-section">
+        <div class="settings-section__title">DSR 한도 (%)</div>
+        <div class="settings-field">
+          <label class="settings-field__label">제1금융권</label>
+          <div class="input-wrap"><input type="text" id="set-dsr-limit1" value="40" data-policy="dsr-limit1"></div>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">제2금융권</label>
+          <div class="input-wrap"><input type="text" id="set-dsr-limit2" value="50" data-policy="dsr-limit2"></div>
+        </div>
+      </div>
+
+      <div class="settings-credit">
+        <div class="settings-credit__version">v1.0.0 · 최종 업데이트: 2026-04-05</div>
+        <div class="settings-credit__author">Made by 디지털전략부</div>
+      </div>
+
+    </div>
+    <div class="settings-panel__footer">
+      <button class="btn btn--reset" id="settingsCancel">취소</button>
+      <button class="btn btn--primary" id="settingsSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
