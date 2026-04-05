@@ -594,6 +594,11 @@ function syncPolicyToForms() {
 
 // Settings button
 document.getElementById('btnSettings').addEventListener('click', openSettings);
+// Badge-policy labels also open settings
+document.querySelectorAll('.badge-policy').forEach(el => {
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', openSettings);
+});
 document.getElementById('settingsClose').addEventListener('click', closeSettings);
 document.getElementById('settingsCancel').addEventListener('click', closeSettings);
 document.getElementById('settingsSave').addEventListener('click', saveSettings);

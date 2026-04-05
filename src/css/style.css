@@ -432,6 +432,12 @@ input, button, select { font-family: inherit; font-size: inherit; }
 }
 .quick-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .quick-btn:active { transform: scale(0.96); }
+.quick-btn--reset {
+  margin-left: auto;
+  color: var(--text-sub); background: transparent;
+  border-color: var(--border);
+}
+.quick-btn--reset:hover { background: var(--divider); color: var(--text); border-color: var(--border); }
 
 /* Toggle group */
 .toggle-group {

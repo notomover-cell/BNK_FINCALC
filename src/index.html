@@ -22,9 +22,6 @@
     <div class="title-bar__actions">
       <button class="title-bar__btn title-bar__btn--settings" id="btnSettings" title="정책변수 설정">⚙ 정책변수</button>
       <button class="title-bar__btn title-bar__btn--theme" id="btnThemeToggle" title="다크모드 전환">☀</button>
-      <button class="title-bar__btn" title="새 창" onclick="window.open(location.href)">+</button>
-      <button class="title-bar__btn" title="최소화">&#8211;</button>
-      <button class="title-bar__btn" title="닫기">&times;</button>
     </div>
   </div>
 
@@ -69,6 +66,7 @@
             <button class="quick-btn" data-target="dep-amount" data-add="1000000">+100만</button>
             <button class="quick-btn" data-target="dep-amount" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="dep-amount" data-add="100000000">+1억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('deposit')">초기화</button>
           </div>
         </div>
         <div class="field">
@@ -107,7 +105,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('deposit')">초기화</button>
           <button class="btn btn--primary" onclick="calcDeposit()">계산하기</button>
         </div>
       </div>
@@ -156,6 +153,7 @@
             <button class="quick-btn" data-target="sav-amount" data-add="1000000">+100만</button>
             <button class="quick-btn" data-target="sav-amount" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="sav-amount" data-add="100000000">+1억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('savings')">초기화</button>
           </div>
         </div>
         <div class="field">
@@ -199,7 +197,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('savings')">초기화</button>
           <button class="btn btn--primary" onclick="calcSavings()">계산하기</button>
         </div>
       </div>
@@ -248,6 +245,7 @@
             <button class="quick-btn" data-target="loan-amount" data-add="1000000">+100만</button>
             <button class="quick-btn" data-target="loan-amount" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="loan-amount" data-add="100000000">+1억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('loan')">초기화</button>
           </div>
         </div>
         <div class="field">
@@ -284,7 +282,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('loan')">초기화</button>
           <button class="btn btn--primary" onclick="calcLoan()">계산하기</button>
         </div>
       </div>
@@ -363,6 +360,7 @@
             <button class="quick-btn" data-target="mort-house-price" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="mort-house-price" data-add="100000000">+1억</button>
             <button class="quick-btn" data-target="mort-house-price" data-add="500000000">+5억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('mortgage')">초기화</button>
           </div>
         </div>
 
@@ -458,7 +456,6 @@
         </div>
 
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('mortgage')">초기화</button>
           <button class="btn btn--primary" onclick="calcMortgage()">계산하기</button>
         </div>
       </div>
@@ -514,6 +511,7 @@
             <button class="quick-btn" data-target="ltv-house-price" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="ltv-house-price" data-add="100000000">+1억</button>
             <button class="quick-btn" data-target="ltv-house-price" data-add="500000000">+5억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('ltv')">초기화</button>
           </div>
         </div>
         <div class="field">
@@ -531,7 +529,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('ltv')">초기화</button>
           <button class="btn btn--primary" onclick="calcLTV()">계산하기</button>
         </div>
       </div>
@@ -557,6 +554,7 @@
           <div class="quick-btns">
             <button class="quick-btn" data-target="dti-income" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="dti-income" data-add="100000000">+1억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('dti')">초기화</button>
           </div>
         </div>
         <div class="section-header">신규 주택담보대출</div>
@@ -614,7 +612,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('dti')">초기화</button>
           <button class="btn btn--primary" onclick="calcDTI()">계산하기</button>
         </div>
       </div>
@@ -640,6 +637,7 @@
           <div class="quick-btns">
             <button class="quick-btn" data-target="dsr-income" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="dsr-income" data-add="100000000">+1억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('dsr')">초기화</button>
           </div>
         </div>
         <div class="section-header">신규 주택담보대출</div>
@@ -715,7 +713,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('dsr')">초기화</button>
           <button class="btn btn--primary" onclick="calcDSR()">계산하기</button>
         </div>
       </div>
@@ -740,6 +737,7 @@
           <div class="quick-btns">
             <button class="quick-btn" data-target="pre-amount" data-add="10000000">+1,000만</button>
             <button class="quick-btn" data-target="pre-amount" data-add="100000000">+1억</button>
+            <button class="quick-btn quick-btn--reset" onclick="resetForm('prepay')">초기화</button>
           </div>
         </div>
         <div class="field">
@@ -776,7 +774,6 @@
           </div>
         </div>
         <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('prepay')">초기화</button>
           <button class="btn btn--primary" onclick="calcPrepay()">계산하기</button>
         </div>
       </div>
