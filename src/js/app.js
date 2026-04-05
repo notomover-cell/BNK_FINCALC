@@ -550,13 +550,15 @@ function openSettings() {
   document.querySelectorAll('[data-policy]').forEach(el => {
     const key = el.dataset.policy;
     const val = policyVars[key] ?? POLICY_DEFAULTS[key];
-    // Format: 금액(만원)은 콤마, 비율은 그대로
     if (key.startsWith('small-')) {
       el.value = val.toLocaleString('ko-KR');
     } else {
       el.value = val;
     }
   });
+  // 플로팅 버튼 설정 로드
+  const floatChk = document.getElementById('set-floating-btn');
+  if (floatChk) floatChk.checked = localStorage.getItem('bnk_floating') !== 'false';
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -572,11 +574,22 @@ function saveSettings() {
   });
   savePolicy();
 
+  // 플로팅 버튼 설정 저장
+  const floatChk = document.getElementById('set-floating-btn');
+  if (floatChk) {
+    const enabled = floatChk.checked;
+    localStorage.setItem('bnk_floating', enabled);
+    // pywebview API로 플로팅 창 show/hide 전달
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.set_floating) {
+      window.pywebview.api.set_floating(enabled);
+    }
+  }
+
   // Sync inline policy fields
   syncPolicyToForms();
 
   closeSettings();
-  showToast('정책변수가 저장되었습니다');
+  showToast('설정이 저장되었습니다');
 }
 
 function syncPolicyToForms() {

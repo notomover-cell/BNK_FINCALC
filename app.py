@@ -1,7 +1,6 @@
 """BNK 금융계산기 — pywebview 래퍼 (플로팅 버튼 포함)"""
 import os
 import sys
-import threading
 import webview
 
 
@@ -64,6 +63,15 @@ class Api:
         else:
             self.main_window.hide()
 
+    def set_floating(self, enabled):
+        """메인 창 설정에서 플로팅 버튼 on/off"""
+        if self.float_window is None:
+            return
+        if enabled:
+            self.float_window.show()
+        else:
+            self.float_window.hide()
+
 
 def main():
     api = Api()
@@ -79,6 +87,7 @@ def main():
         resizable=True,
         frameless=False,
         easy_drag=False,
+        js_api=api,
     )
     api.main_window = main_win
 
@@ -97,8 +106,8 @@ def main():
     )
     api.float_window = float_win
 
-    def on_loaded():
-        """플로팅 창 위치를 우측 하단으로 이동"""
+    def after_start():
+        # 플로팅 창 위치를 우측 하단으로 이동
         try:
             import ctypes
             user32 = ctypes.windll.user32
@@ -108,8 +117,15 @@ def main():
         except Exception:
             pass  # Windows가 아니면 기본 위치 사용
 
-    def after_start():
-        on_loaded()
+        # localStorage에서 플로팅 설정 읽기 → 꺼져있으면 숨김
+        try:
+            result = main_win.evaluate_js(
+                "localStorage.getItem('bnk_floating')"
+            )
+            if result == 'false':
+                float_win.hide()
+        except Exception:
+            pass
 
     webview.start(gui='edgechromium', debug=False, func=after_start)
 
