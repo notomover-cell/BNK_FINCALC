@@ -1,7 +1,10 @@
 """BNK 금융계산기 — pywebview 래퍼 (플로팅 버튼 포함)"""
 import os
 import sys
+import threading
 import webview
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+from functools import partial
 
 
 def get_resource_path():
@@ -84,14 +87,30 @@ class Api:
             self.float_window.hide()
 
 
+def start_local_server(directory, port=18923):
+    """로컬 HTTP 서버 시작 (localStorage 지원을 위해 file:// 대신 사용)"""
+    handler = partial(SimpleHTTPRequestHandler, directory=directory)
+    handler.log_message = lambda *args: None  # 로그 억제
+    for p in range(port, port + 10):
+        try:
+            server = HTTPServer(('127.0.0.1', p), handler)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            return p
+        except OSError:
+            continue
+    raise RuntimeError('사용 가능한 포트를 찾을 수 없습니다.')
+
+
 def main():
     api = Api()
-    entry = os.path.join(get_resource_path(), 'index.html')
+    src_dir = get_resource_path()
+    port = start_local_server(src_dir)
 
     # 메인 계산기 창
     main_win = webview.create_window(
         '금융계산기',
-        url=entry,
+        url=f'http://127.0.0.1:{port}/index.html',
         width=460,
         height=780,
         min_size=(440, 600),

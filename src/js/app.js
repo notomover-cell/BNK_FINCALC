@@ -328,7 +328,7 @@ function fmt(n) {
 }
 
 function fmtPercent(n) {
-  return n.toFixed(2) + '%';
+  return n.toFixed(3) + '%';
 }
 
 function getToggle(field) {
@@ -724,30 +724,59 @@ function calcAnnualRepay(principal, annualRate, months, method) {
   return principal * mr * 12;
 }
 
-function calcMonthlyPayment(principal, annualRate, months, method) {
+function calcMonthlyPayment(principal, annualRate, months, method, roundUnit, roundMethod) {
   if (principal <= 0 || months <= 0) return { monthly: 0, totalInterest: 0, first: 0, last: 0 };
   const mr = annualRate / 100 / 12;
+  const ru = roundUnit || 1;
+
+  // 절사 함수: 단위 아래 버림
+  function trunc(v) { return Math.floor(v / ru) * ru; }
 
   if (method === 'equal') {
     if (mr === 0) {
-      const m = principal / months;
-      return { monthly: m, totalInterest: 0, first: m, last: m };
+      const m = trunc(principal / months);
+      const diff = principal - m * months;
+      if (roundMethod === 'first') return { monthly: m, totalInterest: 0, first: m + diff, last: m };
+      return { monthly: m, totalInterest: 0, first: m, last: m + diff };
     }
-    const monthly = principal * mr * Math.pow(1 + mr, months) / (Math.pow(1 + mr, months) - 1);
-    const totalRepay = monthly * months;
-    return { monthly, totalInterest: totalRepay - principal, first: monthly, last: monthly };
+    const rawMonthly = principal * mr * Math.pow(1 + mr, months) / (Math.pow(1 + mr, months) - 1);
+    const monthly = trunc(rawMonthly);
+    // 절사로 인한 차액을 첫회차 또는 마지막회차에 반영
+    const totalRounded = monthly * months;
+    // 실제 총이자는 스케줄 기반으로 재계산
+    let balance = principal, totalInterest = 0;
+    for (let k = 1; k <= months; k++) {
+      const interest = balance * mr;
+      totalInterest += interest;
+      const principalPart = monthly - interest;
+      balance -= principalPart;
+    }
+    // balance가 남거나 모자라면 차액 발생
+    const diff = Math.round(balance);
+    let first = monthly, last = monthly;
+    if (roundMethod === 'first') first = monthly + diff;
+    else last = monthly + diff;
+    return { monthly, totalInterest: Math.round(totalInterest), first, last };
   }
   if (method === 'principal') {
-    const mp = principal / months;
+    const rawMp = principal / months;
+    const mp = trunc(rawMp);
+    const diff = principal - mp * months;
     let totalInterest = 0;
-    const first = mp + principal * mr;
+    let balance = principal;
+    const firstInterest = balance * mr;
+    let first = mp + trunc(firstInterest);
     let last = 0;
     for (let k = 1; k <= months; k++) {
-      const interest = (principal - mp * (k - 1)) * mr;
+      const interest = trunc(balance * mr);
       totalInterest += interest;
       if (k === months) last = mp + interest;
+      balance -= mp;
     }
-    return { monthly: null, totalInterest, first, last };
+    // 절사 차액 처리
+    if (roundMethod === 'first') first += diff;
+    else last += diff;
+    return { monthly: null, totalInterest: Math.round(totalInterest), first, last };
   }
   if (method === 'graduated') {
     // 체증식분할상환: 매년 일정 비율 증가, 초기 부담 낮음
@@ -848,10 +877,12 @@ function calcLoan() {
   const months = getMonths('loan-period', 'loan-period-unit');
   const rate = parseNum('loan-rate');
   const method = getToggle('loan-repay-type');
+  const roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
+  const roundMethod = getToggle('loan-round-method') || 'last';
 
   if (principal <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
 
-  const result = calcMonthlyPayment(principal, rate, months, method);
+  const result = calcMonthlyPayment(principal, rate, months, method, roundUnit, roundMethod);
 
   document.getElementById('loan-r-principal').textContent = fmt(principal);
   document.getElementById('loan-r-interest').textContent = fmt(result.totalInterest);
@@ -895,7 +926,11 @@ function showSchedule() {
   const months = getMonths('loan-period', 'loan-period-unit');
   const annualRate = parseNum('loan-rate');
   const method = getToggle('loan-repay-type');
+  const roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
+  const roundMethod = getToggle('loan-round-method') || 'last';
   const mr = annualRate / 100 / 12;
+  const ru = roundUnit;
+  function trunc(v) { return Math.floor(v / ru) * ru; }
 
   if (principal <= 0 || months <= 0) return;
 
@@ -903,21 +938,44 @@ function showSchedule() {
   let balance = principal;
 
   if (method === 'equal') {
-    const monthly = mr === 0 ? principal / months :
+    const rawMonthly = mr === 0 ? principal / months :
       principal * mr * Math.pow(1 + mr, months) / (Math.pow(1 + mr, months) - 1);
+    const monthly = trunc(rawMonthly);
     for (let k = 1; k <= months; k++) {
-      const interest = balance * mr;
-      const principalPay = monthly - interest;
+      const interest = Math.round(balance * mr);
+      let payment = monthly;
+      if (k === months) {
+        payment = balance + interest; // 마지막엔 잔액 전부 상환
+      }
+      const principalPay = payment - interest;
       balance -= principalPay;
-      rows.push({ k, payment: monthly, principalPay, interest, balance: Math.max(0, balance) });
+      rows.push({ k, payment, principalPay, interest, balance: Math.max(0, Math.round(balance)) });
+    }
+    // 첫회차 차액 처리: 마지막회차 차액을 첫회차로 이동
+    if (roundMethod === 'first' && rows.length > 1) {
+      const lastDiff = rows[rows.length - 1].payment - monthly;
+      if (lastDiff !== 0) {
+        rows[0].payment += lastDiff;
+        rows[0].principalPay += lastDiff;
+        rows[rows.length - 1].payment = monthly;
+        rows[rows.length - 1].principalPay = monthly - rows[rows.length - 1].interest;
+        // 잔액 재계산
+        let bal = principal;
+        rows.forEach(r => { bal -= r.principalPay; r.balance = Math.max(0, Math.round(bal)); });
+      }
     }
   } else if (method === 'principal') {
-    const mp = principal / months;
+    const mp = trunc(principal / months);
+    const diff = principal - mp * months;
     for (let k = 1; k <= months; k++) {
-      const interest = balance * mr;
-      const payment = mp + interest;
-      balance -= mp;
-      rows.push({ k, payment, principalPay: mp, interest, balance: Math.max(0, balance) });
+      const interest = trunc(balance * mr);
+      let curMp = mp;
+      if (roundMethod === 'first' && k === 1) curMp += diff;
+      else if (roundMethod === 'last' && k === months) curMp += diff;
+      const payment = curMp + interest;
+      balance -= curMp;
+      if (k === months) balance = 0;
+      rows.push({ k, payment, principalPay: curMp, interest, balance: Math.max(0, balance) });
     }
   } else if (method === 'graduated') {
     const g = 0.06;

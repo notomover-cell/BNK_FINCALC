@@ -282,6 +282,22 @@
             <button class="toggle-btn" data-value="graduated">체증식</button>
           </div>
         </div>
+        <div class="field">
+          <label class="field__label">절사 단위</label>
+          <div class="toggle-group" data-field="loan-round-unit">
+            <button class="toggle-btn" data-value="1">1원</button>
+            <button class="toggle-btn" data-value="10">10원</button>
+            <button class="toggle-btn" data-value="100">100원</button>
+            <button class="toggle-btn active" data-value="1000">1,000원</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">절사 차액 처리</label>
+          <div class="toggle-group" data-field="loan-round-method">
+            <button class="toggle-btn" data-value="first">최초회차</button>
+            <button class="toggle-btn active" data-value="last">최종회차</button>
+          </div>
+        </div>
         <div class="action-row">
           <button class="btn btn--primary" onclick="calcLoan()">계산하기</button>
         </div>
