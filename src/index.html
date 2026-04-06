@@ -36,6 +36,8 @@
         <button class="tab-nav__item" data-tab="dti">DTI</button>
         <button class="tab-nav__item" data-tab="dsr">DSR</button>
         <button class="tab-nav__item" data-tab="prepay">중도상환</button>
+        <button class="tab-nav__item" data-tab="calc">계산기</button>
+        <button class="tab-nav__item" data-tab="todo">할일</button>
       </nav>
       <button class="tab-nav__fixed-item" data-tab="history" id="tabHistoryBtn">이력</button>
       <button class="tab-nav__menu-btn" id="megaMenuBtn" title="전체 메뉴">&#9662;</button>
@@ -799,6 +801,53 @@
         </div>
         <div class="result-card__body" id="pre-result-body"></div>
       </div>
+    </div>
+
+    <!-- ========== 계산기 ========== -->
+    <div class="tab-panel" id="panel-calc">
+      <div class="calc-wrap">
+        <div class="calc-display">
+          <div class="calc-display__memory" id="calc-memory"></div>
+          <div class="calc-display__expr" id="calc-expr">&nbsp;</div>
+          <div class="calc-display__value" id="calc-value">0</div>
+        </div>
+        <div class="calc-grid">
+          <button class="calc-btn calc-btn--func" data-calc="MC">MC</button>
+          <button class="calc-btn calc-btn--func" data-calc="MR">MR</button>
+          <button class="calc-btn calc-btn--func" data-calc="M+">M+</button>
+          <button class="calc-btn calc-btn--func" data-calc="M-">M-</button>
+          <button class="calc-btn calc-btn--clear" data-calc="C">C</button>
+          <button class="calc-btn calc-btn--clear" data-calc="CE">CE</button>
+          <button class="calc-btn calc-btn--op" data-calc="back">⌫</button>
+          <button class="calc-btn calc-btn--op" data-calc="÷">÷</button>
+          <button class="calc-btn" data-calc="7">7</button>
+          <button class="calc-btn" data-calc="8">8</button>
+          <button class="calc-btn" data-calc="9">9</button>
+          <button class="calc-btn calc-btn--op" data-calc="×">×</button>
+          <button class="calc-btn" data-calc="4">4</button>
+          <button class="calc-btn" data-calc="5">5</button>
+          <button class="calc-btn" data-calc="6">6</button>
+          <button class="calc-btn calc-btn--op" data-calc="-">-</button>
+          <button class="calc-btn" data-calc="1">1</button>
+          <button class="calc-btn" data-calc="2">2</button>
+          <button class="calc-btn" data-calc="3">3</button>
+          <button class="calc-btn calc-btn--op" data-calc="+">+</button>
+          <button class="calc-btn" data-calc="±">±</button>
+          <button class="calc-btn" data-calc="0">0</button>
+          <button class="calc-btn" data-calc=".">.</button>
+          <button class="calc-btn calc-btn--equal" data-calc="=">=</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 할일 ========== -->
+    <div class="tab-panel" id="panel-todo">
+      <div class="todo-input-wrap">
+        <input type="text" id="todo-input" placeholder="할일을 입력하세요" autocomplete="off">
+        <button class="btn btn--primary todo-add-btn" id="todoAddBtn">추가</button>
+      </div>
+      <div id="todo-list"></div>
+      <button class="todo-clear-done" id="todoClearDone" style="display:none">완료 항목 삭제</button>
     </div>
 
     <!-- ========== 이력 ========== -->

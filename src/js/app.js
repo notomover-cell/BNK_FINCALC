@@ -374,6 +374,8 @@ const TAB_META = {
   dti:      { label: 'DTI',       icon: '📈' },
   dsr:      { label: 'DSR',       icon: '📉' },
   prepay:   { label: '중도상환',   icon: '🔄' },
+  calc:     { label: '계산기',    icon: '🔢' },
+  todo:     { label: '할일',     icon: '✅' },
   history:  { label: '이력',      icon: '📋' }
 };
 
@@ -1425,4 +1427,225 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
   const repayDate = document.getElementById('pre-repay-date');
   if (loanDate) loanDate.value = today;
   if (repayDate) repayDate.value = today;
+
+  // ══════════════════════════════════════════════════════
+  // BASIC CALCULATOR
+  // ══════════════════════════════════════════════════════
+  const calcState = {
+    current: '0',
+    prev: null,
+    op: null,
+    resetNext: false,
+    memory: 0
+  };
+
+  function calcUpdate() {
+    const valEl = document.getElementById('calc-value');
+    const exprEl = document.getElementById('calc-expr');
+    const memEl = document.getElementById('calc-memory');
+    if (!valEl) return;
+
+    // 숫자 포맷
+    let display = calcState.current;
+    if (display !== '' && display !== '-' && !isNaN(Number(display))) {
+      const parts = display.split('.');
+      parts[0] = Number(parts[0]).toLocaleString('ko-KR');
+      display = parts.join('.');
+    }
+    valEl.textContent = display || '0';
+
+    // 수식 표시
+    if (calcState.prev !== null && calcState.op) {
+      const prevFmt = Number(calcState.prev).toLocaleString('ko-KR');
+      exprEl.textContent = prevFmt + ' ' + calcState.op;
+    } else {
+      exprEl.innerHTML = '&nbsp;';
+    }
+
+    // 메모리 표시
+    memEl.textContent = calcState.memory !== 0 ? 'M: ' + calcState.memory.toLocaleString('ko-KR') : '';
+  }
+
+  function calcExecute() {
+    if (calcState.prev === null || !calcState.op) return;
+    const a = parseFloat(calcState.prev);
+    const b = parseFloat(calcState.current);
+    let result;
+    switch (calcState.op) {
+      case '+': result = a + b; break;
+      case '-': result = a - b; break;
+      case '×': result = a * b; break;
+      case '÷': result = b === 0 ? 'Error' : a / b; break;
+      default: return;
+    }
+    if (typeof result === 'number') {
+      // 부동소수점 보정
+      result = Math.round(result * 1e10) / 1e10;
+    }
+    calcState.current = String(result);
+    calcState.prev = null;
+    calcState.op = null;
+    calcState.resetNext = true;
+    calcUpdate();
+  }
+
+  function calcInput(key) {
+    if (/^[0-9]$/.test(key)) {
+      if (calcState.current === '0' || calcState.resetNext) {
+        calcState.current = key;
+        calcState.resetNext = false;
+      } else {
+        calcState.current += key;
+      }
+    } else if (key === '.') {
+      if (calcState.resetNext) { calcState.current = '0'; calcState.resetNext = false; }
+      if (!calcState.current.includes('.')) calcState.current += '.';
+    } else if (key === '±') {
+      if (calcState.current !== '0' && calcState.current !== '') {
+        calcState.current = calcState.current.startsWith('-')
+          ? calcState.current.slice(1) : '-' + calcState.current;
+      }
+    } else if (['+', '-', '×', '÷'].includes(key)) {
+      if (calcState.prev !== null && !calcState.resetNext) {
+        calcExecute();
+      }
+      calcState.prev = calcState.current;
+      calcState.op = key;
+      calcState.resetNext = true;
+    } else if (key === '=') {
+      calcExecute();
+    } else if (key === 'C') {
+      calcState.current = '0';
+      calcState.prev = null;
+      calcState.op = null;
+      calcState.resetNext = false;
+    } else if (key === 'CE') {
+      calcState.current = '0';
+    } else if (key === 'back') {
+      if (!calcState.resetNext) {
+        calcState.current = calcState.current.slice(0, -1) || '0';
+      }
+    } else if (key === 'M+') {
+      calcState.memory += parseFloat(calcState.current) || 0;
+    } else if (key === 'M-') {
+      calcState.memory -= parseFloat(calcState.current) || 0;
+    } else if (key === 'MR') {
+      calcState.current = String(calcState.memory);
+      calcState.resetNext = true;
+    } else if (key === 'MC') {
+      calcState.memory = 0;
+    }
+    calcUpdate();
+  }
+
+  // 버튼 클릭
+  document.querySelector('.calc-grid')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.calc-btn');
+    if (btn) calcInput(btn.dataset.calc);
+  });
+
+  // 키보드 입력 (계산기 탭 활성 시)
+  document.addEventListener('keydown', (e) => {
+    const calcPanel = document.getElementById('panel-calc');
+    if (!calcPanel || !calcPanel.classList.contains('active')) return;
+    // 다른 입력 필드에 포커스 있으면 무시
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const keyMap = {
+      '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
+      '.':'.','+':'+','-':'-','*':'×','/':'÷',
+      'Enter':'=','=':'=',
+      'Escape':'C','Delete':'CE','Backspace':'back'
+    };
+    const mapped = keyMap[e.key];
+    if (mapped) {
+      e.preventDefault();
+      calcInput(mapped);
+    }
+  });
+
+  // ══════════════════════════════════════════════════════
+  // TODO LIST
+  // ══════════════════════════════════════════════════════
+  let todos = [];
+
+  function loadTodos() {
+    try {
+      const saved = localStorage.getItem('bnk_todos');
+      if (saved) todos = JSON.parse(saved);
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveTodos() {
+    localStorage.setItem('bnk_todos', JSON.stringify(todos));
+  }
+
+  function renderTodos() {
+    const list = document.getElementById('todo-list');
+    const clearBtn = document.getElementById('todoClearDone');
+    if (!list) return;
+
+    if (todos.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-state__icon">✅</div><div class="empty-state__text">할일이 없습니다</div></div>';
+      if (clearBtn) clearBtn.style.display = 'none';
+      return;
+    }
+
+    const hasDone = todos.some(t => t.done);
+    if (clearBtn) clearBtn.style.display = hasDone ? '' : 'none';
+
+    list.innerHTML = todos.map((t, i) => `
+      <div class="todo-item ${t.done ? 'todo-item--done' : ''}" data-idx="${i}">
+        <input type="checkbox" class="todo-item__check" ${t.done ? 'checked' : ''} data-todo-toggle="${i}">
+        <span class="todo-item__text">${t.text}</span>
+        <button class="todo-item__delete" data-todo-del="${i}" title="삭제">×</button>
+      </div>
+    `).join('');
+  }
+
+  function addTodo() {
+    const input = document.getElementById('todo-input');
+    const text = input.value.trim();
+    if (!text) return;
+    todos.push({ text, done: false, ts: Date.now() });
+    input.value = '';
+    saveTodos();
+    renderTodos();
+  }
+
+  // 추가 버튼
+  document.getElementById('todoAddBtn')?.addEventListener('click', addTodo);
+
+  // Enter키로 추가
+  document.getElementById('todo-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addTodo();
+  });
+
+  // 체크/삭제 이벤트
+  document.getElementById('todo-list')?.addEventListener('click', (e) => {
+    const toggleIdx = e.target.dataset.todoToggle;
+    if (toggleIdx !== undefined) {
+      todos[toggleIdx].done = e.target.checked;
+      saveTodos();
+      renderTodos();
+      return;
+    }
+    const delIdx = e.target.dataset.todoDel;
+    if (delIdx !== undefined) {
+      todos.splice(delIdx, 1);
+      saveTodos();
+      renderTodos();
+    }
+  });
+
+  // 완료 항목 일괄 삭제
+  document.getElementById('todoClearDone')?.addEventListener('click', () => {
+    todos = todos.filter(t => !t.done);
+    saveTodos();
+    renderTodos();
+  });
+
+  loadTodos();
+  renderTodos();
+
 })();
