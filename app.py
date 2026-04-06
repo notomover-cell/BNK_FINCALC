@@ -17,7 +17,7 @@ FLOAT_HTML = """
 <head>
 <style>
 * { margin:0; padding:0; }
-body {
+html, body {
   background: transparent; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   height: 100vh; width: 100vw;
@@ -36,10 +36,14 @@ button:active { transform: scale(0.95); }
 </style>
 </head>
 <body>
-<button id="fab" title="금융계산기">🧮</button>
+<button id="fab" title="금융계산기 (우클릭: 닫기)">🧮</button>
 <script>
 document.getElementById('fab').addEventListener('click', () => {
   window.pywebview.api.toggle_main();
+});
+document.getElementById('fab').addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  window.pywebview.api.close_app();
 });
 </script>
 </body>
@@ -63,6 +67,13 @@ class Api:
         else:
             self.main_window.hide()
 
+    def close_app(self):
+        """우클릭으로 전체 종료"""
+        if self.main_window:
+            self.main_window.destroy()
+        if self.float_window:
+            self.float_window.destroy()
+
     def set_floating(self, enabled):
         """메인 창 설정에서 플로팅 버튼 on/off"""
         if self.float_window is None:
@@ -84,7 +95,7 @@ def main():
         width=460,
         height=780,
         min_size=(440, 600),
-        resizable=True,
+        resizable=False,
         frameless=False,
         easy_drag=False,
         js_api=api,

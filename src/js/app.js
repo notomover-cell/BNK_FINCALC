@@ -76,6 +76,9 @@ function captureFormSnapshot(tabId) {
     const active = g.querySelector('.toggle-btn.active');
     if (active) snap['toggle:' + g.dataset.field] = active.dataset.value;
   });
+  // Memo
+  const memo = document.getElementById('memo-' + tabId);
+  if (memo && memo.value.trim()) snap['__memo'] = memo.value.trim();
   return snap;
 }
 
@@ -91,6 +94,9 @@ function restoreFormSnapshot(tabId, snap) {
       if (group) {
         group.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.value === val));
       }
+    } else if (key === '__memo') {
+      const memo = document.getElementById('memo-' + tabId);
+      if (memo) memo.value = val;
     } else {
       const inp = document.getElementById(key);
       if (inp) inp.value = val;
@@ -225,11 +231,13 @@ function renderHistory() {
 
   list.innerHTML = filtered.map((h, idx) => {
     const meta = TAB_META[h.tab] || { label: h.tab, icon: '📋' };
+    const memo = h.snapshot?.__memo ? `<div class="history-item__memo">${h.snapshot.__memo}</div>` : '';
     return `<div class="history-item" data-hist-idx="${idx}">
       <div class="history-item__icon">${meta.icon}</div>
       <div class="history-item__body">
         <div class="history-item__title">${meta.label}</div>
         <div class="history-item__summary">${h.summary}</div>
+        ${memo}
       </div>
       <div class="history-item__time">${h.date === todayStr ? h.time : h.date + ' ' + h.time}</div>
     </div>`;
@@ -366,7 +374,6 @@ const TAB_META = {
   dti:      { label: 'DTI',       icon: '📈' },
   dsr:      { label: 'DSR',       icon: '📉' },
   prepay:   { label: '중도상환',   icon: '🔄' },
-  exchange: { label: '환전/송금',  icon: '💱' },
   history:  { label: '이력',      icon: '📋' }
 };
 
@@ -536,6 +543,30 @@ document.addEventListener('input', (e) => {
   }
 });
 
+// 텐키 Del(.) → 00 입력 (금액 필드), 이자율 필드 자동 소수점
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName !== 'INPUT') return;
+  const id = e.target.id || '';
+  const isRateField = id.includes('-rate') || id.includes('-discount');
+
+  // 이자율 필드: 숫자 한자리 입력 후 자동 소수점
+  if (isRateField && !e.target.value && /^[0-9]$/.test(e.key)) {
+    e.preventDefault();
+    e.target.value = e.key + '.';
+    return;
+  }
+
+  // 텐키 Del(.) → 00 입력 (금액 필드에서만, 이미 소수점 있으면 무시)
+  if (e.key === '.' && !isRateField && e.target.inputMode === 'numeric') {
+    e.preventDefault();
+    const pos = e.target.selectionStart;
+    const val = e.target.value;
+    e.target.value = val.slice(0, pos) + '00' + val.slice(pos);
+    e.target.setSelectionRange(pos + 2, pos + 2);
+    e.target.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+});
+
 // Currency suffix update
 document.getElementById('ex-currency')?.addEventListener('change', (e) => {
   const suffix = document.getElementById('ex-currency-suffix');
@@ -600,9 +631,9 @@ function syncPolicyToForms() {
   if (prePeriod && !prePeriod.dataset.userEdited) prePeriod.value = getPolicy('prepay-period');
   // 소액임차보증금 sync
   const ltvSmall = document.getElementById('ltv-small-deposit');
-  if (ltvSmall && !ltvSmall.dataset.userEdited) ltvSmall.value = (getPolicy('small-seoul') * 10000).toLocaleString('ko-KR');
+  if (ltvSmall && !ltvSmall.dataset.userEdited) ltvSmall.value = (getPolicy('small-metro') * 10000).toLocaleString('ko-KR');
   const mortSmall = document.getElementById('mort-small-deposit');
-  if (mortSmall && !mortSmall.dataset.userEdited) mortSmall.value = (getPolicy('small-seoul') * 10000).toLocaleString('ko-KR');
+  if (mortSmall && !mortSmall.dataset.userEdited) mortSmall.value = (getPolicy('small-metro') * 10000).toLocaleString('ko-KR');
 }
 
 // Settings button
@@ -844,6 +875,15 @@ function calcLoan() {
   }
 
   document.getElementById('loan-result').style.display = '';
+
+  // 상환스케줄 리셋 (조건 변경 후 재계산 시)
+  const scheduleWrap = document.getElementById('loan-schedule');
+  if (scheduleWrap) {
+    scheduleWrap.style.display = 'none';
+    const scheduleBody = document.getElementById('loan-schedule-body');
+    if (scheduleBody) scheduleBody.innerHTML = '';
+  }
+
   addRecentCalc('loan', '월 ' + fmt(result.monthly || result.first));
 }
 
@@ -1012,8 +1052,7 @@ function calcDSR() {
   const months = getMonths('dsr-period', 'dsr-period-unit');
   const rate = parseNum('dsr-rate');
   const method = getToggle('dsr-repay');
-  const existInterest = parseNum('dsr-exist-interest');
-  const existPrincipal = parseNum('dsr-exist-principal');
+  const existRepay = parseNum('dsr-exist-repay');
   const region = getToggle('dsr-region');
   const rateType = getToggle('dsr-rate-type');
 
@@ -1021,7 +1060,7 @@ function calcDSR() {
   if (loanAmount <= 0 || months <= 0) return alert('대출 정보를 입력해주세요.');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
-  const dsr = (newAnnualRepay + existInterest + existPrincipal) / income * 100;
+  const dsr = (newAnnualRepay + existRepay) / income * 100;
 
   // Stress DSR — uses policy variables
   const stressBase = {
@@ -1037,7 +1076,7 @@ function calcDSR() {
   const stressRate = rate + actualAdded;
 
   const stressAnnualRepay = calcAnnualRepay(loanAmount, stressRate, months, method);
-  const stressDsr = (stressAnnualRepay + existInterest + existPrincipal) / income * 100;
+  const stressDsr = (stressAnnualRepay + existRepay) / income * 100;
 
   const regionLabel = { capital: '수도권·규제지역', local: '지방', other: '기타(전국)' };
   const rateTypeLabel = { variable: '변동형', mixed: '혼합형', periodic: '주기형', fixed: '순수고정형' };

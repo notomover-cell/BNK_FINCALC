@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=440">
   <title>BNK 금융계산기</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css" rel="stylesheet">
+  <!-- CDN 폰트 제거: 내부망에서 렌더링 차단 원인 → 시스템 폰트 사용 -->
   <link rel="icon" href="img/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -37,7 +36,6 @@
         <button class="tab-nav__item" data-tab="dti">DTI</button>
         <button class="tab-nav__item" data-tab="dsr">DSR</button>
         <button class="tab-nav__item" data-tab="prepay">중도상환</button>
-        <button class="tab-nav__item" data-tab="exchange">환전/송금</button>
       </nav>
       <button class="tab-nav__fixed-item" data-tab="history" id="tabHistoryBtn">이력</button>
       <button class="tab-nav__menu-btn" id="megaMenuBtn" title="전체 메뉴">&#9662;</button>
@@ -54,6 +52,7 @@
 
     <!-- ========== 예금 ========== -->
     <div class="tab-panel active" id="panel-deposit">
+      <div class="memo-wrap"><textarea id="memo-deposit" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">예치금액</label>
@@ -141,6 +140,7 @@
 
     <!-- ========== 적금 ========== -->
     <div class="tab-panel" id="panel-savings">
+      <div class="memo-wrap"><textarea id="memo-savings" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">월 납입액</label>
@@ -233,6 +233,7 @@
 
     <!-- ========== 대출 ========== -->
     <div class="tab-panel" id="panel-loan">
+      <div class="memo-wrap"><textarea id="memo-loan" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">대출금액</label>
@@ -324,6 +325,7 @@
 
     <!-- ========== 주담대 종합 ========== -->
     <div class="tab-panel" id="panel-mortgage">
+      <div class="memo-wrap"><textarea id="memo-mortgage" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="section-header">담보 / 주택 정보</div>
         <div class="field">
@@ -476,6 +478,7 @@
 
     <!-- ========== LTV ========== -->
     <div class="tab-panel" id="panel-ltv">
+      <div class="memo-wrap"><textarea id="memo-ltv" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">대출목적</label>
@@ -515,7 +518,7 @@
           </div>
         </div>
         <div class="field">
-          <label class="field__label">보유 대출 잔액</label>
+          <label class="field__label">선순위채권 설정액</label>
           <div class="input-wrap">
             <input type="text" id="ltv-existing-loan" placeholder="0" inputmode="numeric">
             <span class="input-wrap__suffix">원</span>
@@ -543,6 +546,7 @@
 
     <!-- ========== DTI ========== -->
     <div class="tab-panel" id="panel-dti">
+      <div class="memo-wrap"><textarea id="memo-dti" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="section-header">소득 정보</div>
         <div class="field">
@@ -626,6 +630,7 @@
 
     <!-- ========== DSR ========== -->
     <div class="tab-panel" id="panel-dsr">
+      <div class="memo-wrap"><textarea id="memo-dsr" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="section-header">소득 정보</div>
         <div class="field">
@@ -681,16 +686,9 @@
         </div>
         <div class="section-header">보유 대출</div>
         <div class="field">
-          <label class="field__label">보유대출 연이자 상환액</label>
+          <label class="field__label">보유대출 연원리금 상환액</label>
           <div class="input-wrap">
-            <input type="text" id="dsr-exist-interest" placeholder="0" inputmode="numeric">
-            <span class="input-wrap__suffix">원</span>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label">보유대출 연원금 상환액</label>
-          <div class="input-wrap">
-            <input type="text" id="dsr-exist-principal" placeholder="0" inputmode="numeric">
+            <input type="text" id="dsr-exist-repay" placeholder="0" inputmode="numeric">
             <span class="input-wrap__suffix">원</span>
           </div>
         </div>
@@ -727,6 +725,7 @@
 
     <!-- ========== 중도상환 ========== -->
     <div class="tab-panel" id="panel-prepay">
+      <div class="memo-wrap"><textarea id="memo-prepay" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">상환금액</label>
@@ -783,72 +782,6 @@
           <span class="result-card__toggle">&#9650;</span>
         </div>
         <div class="result-card__body" id="pre-result-body"></div>
-      </div>
-    </div>
-
-    <!-- ========== 환전/송금 ========== -->
-    <div class="tab-panel" id="panel-exchange">
-      <div class="card">
-        <div class="field">
-          <label class="field__label">거래 종류</label>
-          <div class="toggle-group" data-field="ex-type" style="flex-wrap:wrap">
-            <button class="toggle-btn active" data-value="sell">환전(매도)</button>
-            <button class="toggle-btn" data-value="buy">환전(매입)</button>
-            <button class="toggle-btn" data-value="send">송금(보낼때)</button>
-            <button class="toggle-btn" data-value="receive">송금(받을때)</button>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label">통화</label>
-          <div class="input-wrap">
-            <select id="ex-currency">
-              <option value="USD">USD (미국 달러)</option>
-              <option value="JPY">JPY (일본 엔)</option>
-              <option value="EUR">EUR (유로)</option>
-              <option value="CNY">CNY (중국 위안)</option>
-              <option value="GBP">GBP (영국 파운드)</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label">외화 금액</label>
-          <div class="input-wrap">
-            <input type="text" id="ex-foreign-amount" placeholder="0" inputmode="decimal">
-            <span class="input-wrap__suffix" id="ex-currency-suffix">USD</span>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label">적용 환율</label>
-          <div class="input-wrap">
-            <input type="text" id="ex-rate" placeholder="0.00" inputmode="decimal">
-            <span class="input-wrap__suffix">원</span>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label">우대율</label>
-          <div class="input-wrap">
-            <input type="text" id="ex-discount" placeholder="0" value="0" inputmode="numeric">
-            <span class="input-wrap__suffix">%</span>
-          </div>
-        </div>
-        <div class="field" id="ex-fee-field" style="display:none">
-          <label class="field__label">송금 수수료</label>
-          <div class="input-wrap">
-            <input type="text" id="ex-fee" placeholder="0" inputmode="numeric">
-            <span class="input-wrap__suffix">원</span>
-          </div>
-        </div>
-        <div class="action-row">
-          <button class="btn btn--reset" onclick="resetForm('exchange')">초기화</button>
-          <button class="btn btn--primary" onclick="calcExchange()">계산하기</button>
-        </div>
-      </div>
-      <div class="result-card" id="ex-result" style="display:none">
-        <div class="result-card__header" onclick="toggleResult('ex-result')">
-          계산 결과
-          <span class="result-card__toggle">&#9650;</span>
-        </div>
-        <div class="result-card__body" id="ex-result-body"></div>
       </div>
     </div>
 
