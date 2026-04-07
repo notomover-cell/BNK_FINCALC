@@ -157,9 +157,21 @@ def main():
     def after_start():
         splash.close()
 
+    import traceback
+    log_path = os.path.join(os.path.dirname(sys.executable) if getattr(sys, '_MEIPASS', None) else '.', 'debug_log.txt')
     try:
         webview.start(gui='edgechromium', debug=False, func=after_start)
-    except Exception:
+    except Exception as e:
+        with open(log_path, 'w', encoding='utf-8') as f:
+            f.write(f'EdgeChromium 실패: {e}\n\n')
+            f.write(traceback.format_exc())
+            f.write(f'\n\nWEBVIEW2 env: {os.environ.get("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", "미설정")}\n')
+            f.write(f'Python: {sys.version}\n')
+            try:
+                import clr
+                f.write(f'pythonnet(clr): 로드 성공\n')
+            except Exception as e2:
+                f.write(f'pythonnet(clr): 로드 실패 - {e2}\n')
         webview.start(debug=False, func=after_start)
 
 
