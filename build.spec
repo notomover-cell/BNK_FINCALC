@@ -6,7 +6,12 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[('src', 'src')],
-    hiddenimports=['webview'],
+    hiddenimports=[
+        'webview',
+        'webview.platforms.edgechromium',
+        'clr',
+        'pythonnet',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

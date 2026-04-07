@@ -117,7 +117,11 @@ def main():
     def after_start():
         splash.close()
 
-    webview.start(gui='edgechromium', debug=True, func=after_start)
+    try:
+        webview.start(gui='edgechromium', debug=True, func=after_start)
+    except Exception:
+        # EdgeChromium 사용 불가 시 기본 엔진으로 폴백
+        webview.start(debug=True, func=after_start)
 
 
 if __name__ == '__main__':
