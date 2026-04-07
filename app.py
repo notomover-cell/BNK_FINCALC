@@ -1,16 +1,11 @@
 """BNK 금융계산기 — pywebview 래퍼"""
 import os
 import sys
-import threading
-import tkinter as tk
 import winreg
-import webview
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-from functools import partial
 
-
-def is_webview2_installed():
-    """WebView2 런타임 설치 여부 확인"""
+# WebView2 환경변수를 webview import 전에 설정
+def _setup_webview2_path():
+    """Edge 버전 폴더를 WebView2 경로로 지정 (import 전 실행)"""
     try:
         key = winreg.OpenKey(
             winreg.HKEY_LOCAL_MACHINE,
@@ -18,9 +13,28 @@ def is_webview2_installed():
         )
         winreg.QueryValueEx(key, "pv")
         winreg.CloseKey(key)
-        return True
+        return  # WebView2 정상 등록됨
     except (FileNotFoundError, OSError):
-        return False
+        pass
+    # Edge 버전 폴더 탐색
+    for base in [r'C:\Program Files (x86)\Microsoft\Edge\Application',
+                 r'C:\Program Files\Microsoft\Edge\Application']:
+        if not os.path.isdir(base):
+            continue
+        for name in os.listdir(base):
+            ver_path = os.path.join(base, name)
+            if os.path.isdir(ver_path) and name[0].isdigit():
+                os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = ver_path
+                return
+
+_setup_webview2_path()
+
+import threading
+import tkinter as tk
+import webview
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+from functools import partial
+
 
 
 
@@ -124,20 +138,6 @@ class Splash:
 def main():
     splash = Splash()
     splash.show()
-
-    # WebView2 런타임 확인 → 없으면 Edge 버전 폴더로 직접 지정
-    if not is_webview2_installed():
-        for base in [r'C:\Program Files (x86)\Microsoft\Edge\Application',
-                     r'C:\Program Files\Microsoft\Edge\Application']:
-            if not os.path.isdir(base):
-                continue
-            for name in os.listdir(base):
-                ver_path = os.path.join(base, name)
-                if os.path.isdir(ver_path) and name[0].isdigit():
-                    os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = ver_path
-                    break
-            if 'WEBVIEW2_BROWSER_EXECUTABLE_FOLDER' in os.environ:
-                break
 
     src_dir = get_resource_path()
     port = start_local_server(src_dir)
