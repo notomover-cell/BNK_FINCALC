@@ -99,7 +99,7 @@ def main():
     def after_start():
         splash.close()
 
-    webview.start(gui='edgechromium', debug=False, func=after_start)
+    webview.start(gui='edgechromium', debug=True, func=after_start)
 
 
 if __name__ == '__main__':
