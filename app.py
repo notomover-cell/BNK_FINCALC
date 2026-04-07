@@ -15,10 +15,28 @@ def get_resource_path():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
 
 
+class FixedMIMEHandler(SimpleHTTPRequestHandler):
+    """Windows 레지스트리 MIME 설정에 의존하지 않도록 명시적 지정"""
+    extensions_map = {
+        **SimpleHTTPRequestHandler.extensions_map,
+        '.css': 'text/css',
+        '.js': 'application/javascript',
+        '.html': 'text/html',
+        '.json': 'application/json',
+        '.ico': 'image/x-icon',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.svg': 'image/svg+xml',
+        '.woff': 'font/woff',
+        '.woff2': 'font/woff2',
+    }
+    def log_message(self, format, *args):
+        pass  # 로그 억제
+
+
 def start_local_server(directory, port=18923):
     """로컬 HTTP 서버 시작 (localStorage 지원을 위해 file:// 대신 사용)"""
-    handler = partial(SimpleHTTPRequestHandler, directory=directory)
-    handler.log_message = lambda *args: None  # 로그 억제
+    handler = partial(FixedMIMEHandler, directory=directory)
     for p in range(port, port + 10):
         try:
             server = HTTPServer(('127.0.0.1', p), handler)
