@@ -589,9 +589,6 @@ function openSettings() {
       el.value = val;
     }
   });
-  // 플로팅 버튼 설정 로드
-  const floatChk = document.getElementById('set-floating-btn');
-  if (floatChk) floatChk.checked = localStorage.getItem('bnk_floating') !== 'false';
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -606,17 +603,6 @@ function saveSettings() {
     if (!isNaN(val)) policyVars[key] = val;
   });
   savePolicy();
-
-  // 플로팅 버튼 설정 저장
-  const floatChk = document.getElementById('set-floating-btn');
-  if (floatChk) {
-    const enabled = floatChk.checked;
-    localStorage.setItem('bnk_floating', enabled);
-    // pywebview API로 플로팅 창 show/hide 전달
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.set_floating) {
-      window.pywebview.api.set_floating(enabled);
-    }
-  }
 
   // Sync inline policy fields
   syncPolicyToForms();

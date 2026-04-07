@@ -64,6 +64,7 @@ body {
 }
 
 input, button, select { font-family: inherit; font-size: inherit; }
+input, textarea, select { user-select: text; -webkit-user-select: text; }
 
 /* ===== App Shell ===== */
 #app {
@@ -921,7 +922,25 @@ input, button, select { font-family: inherit; font-size: inherit; }
 /* ===== Memo Field ===== */
 .memo-wrap {
   margin-bottom: 10px;
+  position: relative;
 }
+.memo-wrap__clear {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.memo-wrap:hover .memo-wrap__clear,
+.memo-wrap:focus-within .memo-wrap__clear { opacity: 0.5; }
+.memo-wrap__clear:hover { opacity: 1; color: var(--red); }
 .memo-wrap textarea {
   width: 100%;
   min-height: 32px;

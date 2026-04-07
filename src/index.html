@@ -54,7 +54,7 @@
 
     <!-- ========== 예금 ========== -->
     <div class="tab-panel active" id="panel-deposit">
-      <div class="memo-wrap"><textarea id="memo-deposit" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-deposit" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">예치금액</label>
@@ -142,7 +142,7 @@
 
     <!-- ========== 적금 ========== -->
     <div class="tab-panel" id="panel-savings">
-      <div class="memo-wrap"><textarea id="memo-savings" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-savings" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">월 납입액</label>
@@ -235,7 +235,7 @@
 
     <!-- ========== 대출 ========== -->
     <div class="tab-panel" id="panel-loan">
-      <div class="memo-wrap"><textarea id="memo-loan" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-loan" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">대출금액</label>
@@ -342,7 +342,7 @@
 
     <!-- ========== 주담대 종합 ========== -->
     <div class="tab-panel" id="panel-mortgage">
-      <div class="memo-wrap"><textarea id="memo-mortgage" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-mortgage" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="section-header">담보 / 주택 정보</div>
         <div class="field">
@@ -495,7 +495,7 @@
 
     <!-- ========== LTV ========== -->
     <div class="tab-panel" id="panel-ltv">
-      <div class="memo-wrap"><textarea id="memo-ltv" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-ltv" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">대출목적</label>
@@ -563,7 +563,7 @@
 
     <!-- ========== DTI ========== -->
     <div class="tab-panel" id="panel-dti">
-      <div class="memo-wrap"><textarea id="memo-dti" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-dti" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="section-header">소득 정보</div>
         <div class="field">
@@ -647,7 +647,7 @@
 
     <!-- ========== DSR ========== -->
     <div class="tab-panel" id="panel-dsr">
-      <div class="memo-wrap"><textarea id="memo-dsr" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-dsr" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="section-header">소득 정보</div>
         <div class="field">
@@ -742,7 +742,7 @@
 
     <!-- ========== 중도상환 ========== -->
     <div class="tab-panel" id="panel-prepay">
-      <div class="memo-wrap"><textarea id="memo-prepay" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-prepay" placeholder="메모 (선택)" rows="1"></textarea></div>
       <div class="card">
         <div class="field">
           <label class="field__label">상환금액</label>
@@ -980,14 +980,6 @@
       <!-- 앱 설정 -->
       <div class="settings-section">
         <div class="settings-section__title">앱 설정</div>
-        <div class="settings-field" style="display:flex;align-items:center;justify-content:space-between">
-          <label class="settings-field__label" style="margin:0">플로팅 버튼 (항상 위 바로가기)</label>
-          <label class="switch">
-            <input type="checkbox" id="set-floating-btn" checked>
-            <span class="switch__slider"></span>
-          </label>
-        </div>
-        <div class="settings-field__hint">화면 우측 하단에 계산기 바로가기 버튼을 표시합니다</div>
       </div>
 
       <div class="settings-credit">
