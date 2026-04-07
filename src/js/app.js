@@ -495,6 +495,15 @@ document.addEventListener('click', (e) => {
     if (feeField) feeField.style.display = (v === 'send' || v === 'receive') ? '' : 'none';
   }
 
+  // 할부/분할 전환
+  if (group.dataset.field === 'loan-category') {
+    const isSplit = btn.dataset.value === 'split';
+    const installOpts = document.getElementById('loan-installment-opts');
+    const splitOpts = document.getElementById('loan-split-opts');
+    if (installOpts) installOpts.style.display = isSplit ? 'none' : '';
+    if (splitOpts) splitOpts.style.display = isSplit ? '' : 'none';
+  }
+
   // History filter change
   if (group.dataset.field === 'hist-date') renderHistory();
 });
@@ -817,9 +826,16 @@ function calcLoan() {
   const principal = parseNum('loan-amount');
   const months = getMonths('loan-period', 'loan-period-unit');
   const rate = parseNum('loan-rate');
-  const method = getToggle('loan-repay-type');
-  const roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
-  const roundMethod = getToggle('loan-round-method') || 'last';
+  const category = getToggle('loan-category') || 'installment';
+  let method, roundUnit = 1, roundMethod = 'last';
+
+  if (category === 'split') {
+    method = 'principal';
+    roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
+    roundMethod = getToggle('loan-round-method') || 'last';
+  } else {
+    method = getToggle('loan-repay-type') || 'equal';
+  }
 
   if (principal <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
 
@@ -863,9 +879,15 @@ function showSchedule() {
   const principal = parseNum('loan-amount');
   const months = getMonths('loan-period', 'loan-period-unit');
   const annualRate = parseNum('loan-rate');
-  const method = getToggle('loan-repay-type');
-  const roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
-  const roundMethod = getToggle('loan-round-method') || 'last';
+  const category = getToggle('loan-category') || 'installment';
+  let method, roundUnit = 1, roundMethod = 'last';
+  if (category === 'split') {
+    method = 'principal';
+    roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
+    roundMethod = getToggle('loan-round-method') || 'last';
+  } else {
+    method = getToggle('loan-repay-type') || 'equal';
+  }
   const mr = annualRate / 100 / 12;
 
   if (principal <= 0 || months <= 0) return;

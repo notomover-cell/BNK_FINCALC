@@ -276,27 +276,36 @@
           </div>
         </div>
         <div class="field">
+          <label class="field__label">상환구분</label>
+          <div class="toggle-group" data-field="loan-category">
+            <button class="toggle-btn active" data-value="installment">할부</button>
+            <button class="toggle-btn" data-value="split">분할</button>
+          </div>
+        </div>
+        <div class="field" id="loan-installment-opts">
           <label class="field__label">상환방법</label>
-          <div class="toggle-group" data-field="loan-repay-type" style="flex-wrap:wrap">
+          <div class="toggle-group" data-field="loan-repay-type">
             <button class="toggle-btn active" data-value="equal">원리금균등</button>
-            <button class="toggle-btn" data-value="principal">원금균등</button>
             <button class="toggle-btn" data-value="bullet">만기일시</button>
           </div>
         </div>
-        <div class="field">
-          <label class="field__label">절사 단위</label>
-          <div class="toggle-group" data-field="loan-round-unit">
-            <button class="toggle-btn" data-value="1">1원</button>
-            <button class="toggle-btn" data-value="10">10원</button>
-            <button class="toggle-btn" data-value="100">100원</button>
-            <button class="toggle-btn active" data-value="1000">1,000원</button>
+        <div id="loan-split-opts" style="display:none">
+          <div class="field">
+            <label class="field__label">원금분할단위</label>
+            <div class="toggle-group" data-field="loan-round-unit">
+              <button class="toggle-btn" data-value="1">1원</button>
+              <button class="toggle-btn" data-value="10">10원</button>
+              <button class="toggle-btn" data-value="100">100원</button>
+              <button class="toggle-btn active" data-value="1000">1,000원</button>
+              <button class="toggle-btn" data-value="10000">10,000원</button>
+            </div>
           </div>
-        </div>
-        <div class="field">
-          <label class="field__label">절사 차액 처리</label>
-          <div class="toggle-group" data-field="loan-round-method">
-            <button class="toggle-btn" data-value="first">최초회차</button>
-            <button class="toggle-btn active" data-value="last">최종회차</button>
+          <div class="field">
+            <label class="field__label">차액납부</label>
+            <div class="toggle-group" data-field="loan-round-method">
+              <button class="toggle-btn" data-value="first">최초회차</button>
+              <button class="toggle-btn active" data-value="last">최종회차</button>
+            </div>
           </div>
         </div>
         <div class="action-row">
