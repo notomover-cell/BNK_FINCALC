@@ -20,10 +20,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Download WebView2 Bootstrapper
-        run: |
-          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile "MicrosoftEdgeWebview2Setup.exe"
-
       - name: Build EXE
         run: pyinstaller build.spec
 

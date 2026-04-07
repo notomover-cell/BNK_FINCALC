@@ -1,7 +1,6 @@
 """BNK 금융계산기 — pywebview 래퍼"""
 import os
 import sys
-import subprocess
 import threading
 import tkinter as tk
 import winreg
@@ -24,21 +23,6 @@ def is_webview2_installed():
         return False
 
 
-def install_webview2():
-    """번들된 WebView2 설치파일로 자동 설치"""
-    if getattr(sys, '_MEIPASS', None):
-        installer = os.path.join(sys._MEIPASS, 'MicrosoftEdgeWebview2Setup.exe')
-    else:
-        installer = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'MicrosoftEdgeWebview2Setup.exe')
-
-    if not os.path.exists(installer):
-        return False
-
-    try:
-        subprocess.run([installer, '/silent', '/install'], check=True, timeout=120)
-        return True
-    except Exception:
-        return False
 
 
 def get_resource_path():
@@ -141,14 +125,16 @@ def main():
     splash = Splash()
     splash.show()
 
-    # WebView2 런타임 확인 → 없으면 자동 설치
+    # WebView2 런타임 확인 → 없으면 Edge 경로로 직접 지정
     if not is_webview2_installed():
-        splash.update_text('WebView2 설치 중...')
-        if not install_webview2():
-            import tkinter.messagebox as mb
-            mb.showerror('오류', 'WebView2 런타임 설치에 실패했습니다.\n관리자에게 문의하세요.')
-            splash.close()
-            return
+        edge_paths = [
+            r'C:\Program Files (x86)\Microsoft\Edge\Application',
+            r'C:\Program Files\Microsoft\Edge\Application',
+        ]
+        for p in edge_paths:
+            if os.path.exists(os.path.join(p, 'msedge.exe')):
+                os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = p
+                break
 
     src_dir = get_resource_path()
     port = start_local_server(src_dir)
