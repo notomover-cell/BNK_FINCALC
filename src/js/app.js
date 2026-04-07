@@ -498,9 +498,7 @@ document.addEventListener('click', (e) => {
   // 할부/분할 전환
   if (group.dataset.field === 'loan-category') {
     const isSplit = btn.dataset.value === 'split';
-    const installOpts = document.getElementById('loan-installment-opts');
     const splitOpts = document.getElementById('loan-split-opts');
-    if (installOpts) installOpts.style.display = isSplit ? 'none' : '';
     if (splitOpts) splitOpts.style.display = isSplit ? '' : 'none';
   }
 
@@ -830,11 +828,11 @@ function calcLoan() {
   let method, roundUnit = 1, roundMethod = 'last';
 
   if (category === 'split') {
-    method = 'principal';
+    method = getToggle('loan-repay-type') || 'principal';
     roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
     roundMethod = getToggle('loan-round-method') || 'last';
   } else {
-    method = getToggle('loan-repay-type') || 'equal';
+    method = 'equal'; // 할부 = 원리금균등 고정
   }
 
   if (principal <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
@@ -882,11 +880,11 @@ function showSchedule() {
   const category = getToggle('loan-category') || 'installment';
   let method, roundUnit = 1, roundMethod = 'last';
   if (category === 'split') {
-    method = 'principal';
+    method = getToggle('loan-repay-type') || 'principal';
     roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
     roundMethod = getToggle('loan-round-method') || 'last';
   } else {
-    method = getToggle('loan-repay-type') || 'equal';
+    method = 'equal';
   }
   const mr = annualRate / 100 / 12;
 

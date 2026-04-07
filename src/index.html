@@ -282,14 +282,15 @@
             <button class="toggle-btn" data-value="split">분할</button>
           </div>
         </div>
-        <div class="field" id="loan-installment-opts">
-          <label class="field__label">상환방법</label>
-          <div class="toggle-group" data-field="loan-repay-type">
-            <button class="toggle-btn active" data-value="equal">원리금균등</button>
-            <button class="toggle-btn" data-value="bullet">만기일시</button>
-          </div>
-        </div>
         <div id="loan-split-opts" style="display:none">
+          <div class="field">
+            <label class="field__label">상환방식</label>
+            <div class="toggle-group" data-field="loan-repay-type">
+              <button class="toggle-btn active" data-value="principal">원금균등</button>
+              <button class="toggle-btn" data-value="equal">원리금균등</button>
+              <button class="toggle-btn" data-value="bullet">만기일시</button>
+            </div>
+          </div>
           <div class="field">
             <label class="field__label">원금분할단위</label>
             <div class="toggle-group" data-field="loan-round-unit">
