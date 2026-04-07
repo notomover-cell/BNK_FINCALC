@@ -68,11 +68,20 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 
 /* ===== App Shell ===== */
 #app {
-  width: var(--app-width);
+  width: 100%;
+  max-width: var(--app-width);
+  margin: 0 auto;
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+html {
+  background: var(--bg-subtle);
+}
+[data-theme="dark"] html {
+  background: #17171C;
 }
 
 /* ----- Title Bar ----- */
