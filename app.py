@@ -30,41 +30,56 @@ def start_local_server(directory, port=18923):
     raise RuntimeError('사용 가능한 포트를 찾을 수 없습니다.')
 
 
-def show_splash():
-    """tkinter 스플래시 화면 표시 (WebView2 초기화 동안)"""
-    splash = tk.Tk()
-    splash.title('')
-    splash.overrideredirect(True)  # 프레임 없음
+class Splash:
+    """별도 스레드에서 tkinter 스플래시 표시"""
 
-    w, h = 280, 120
-    sw = splash.winfo_screenwidth()
-    sh = splash.winfo_screenheight()
-    x = (sw - w) // 2
-    y = (sh - h) // 2
-    splash.geometry(f'{w}x{h}+{x}+{y}')
+    def __init__(self):
+        self._thread = None
+        self._root = None
 
-    splash.configure(bg='#191F28')
-    splash.attributes('-topmost', True)
+    def show(self):
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
 
-    label = tk.Label(
-        splash, text='BNK 금융계산기', font=('맑은 고딕', 14, 'bold'),
-        fg='#FFFFFF', bg='#191F28'
-    )
-    label.pack(expand=True)
+    def _run(self):
+        root = tk.Tk()
+        self._root = root
+        root.title('')
+        root.overrideredirect(True)
 
-    sub = tk.Label(
-        splash, text='로딩 중...', font=('맑은 고딕', 9),
-        fg='#8B95A1', bg='#191F28'
-    )
-    sub.pack(pady=(0, 20))
+        w, h = 280, 120
+        sw = root.winfo_screenwidth()
+        sh = root.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        root.geometry(f'{w}x{h}+{x}+{y}')
 
-    return splash
+        root.configure(bg='#191F28')
+        root.attributes('-topmost', True)
+
+        tk.Label(
+            root, text='BNK 금융계산기', font=('맑은 고딕', 14, 'bold'),
+            fg='#FFFFFF', bg='#191F28'
+        ).pack(expand=True)
+
+        tk.Label(
+            root, text='로딩 중...', font=('맑은 고딕', 9),
+            fg='#8B95A1', bg='#191F28'
+        ).pack(pady=(0, 20))
+
+        root.mainloop()
+
+    def close(self):
+        try:
+            if self._root:
+                self._root.after(0, self._root.destroy)
+        except Exception:
+            pass
 
 
 def main():
-    # 스플래시 먼저 표시
-    splash = show_splash()
-    splash.update()
+    splash = Splash()
+    splash.show()
 
     src_dir = get_resource_path()
     port = start_local_server(src_dir)
@@ -82,11 +97,7 @@ def main():
     )
 
     def after_start():
-        # 스플래시 닫기
-        try:
-            splash.destroy()
-        except Exception:
-            pass
+        splash.close()
 
     webview.start(gui='edgechromium', debug=False, func=after_start)
 
