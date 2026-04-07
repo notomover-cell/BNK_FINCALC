@@ -125,15 +125,18 @@ def main():
     splash = Splash()
     splash.show()
 
-    # WebView2 런타임 확인 → 없으면 Edge 경로로 직접 지정
+    # WebView2 런타임 확인 → 없으면 Edge 버전 폴더로 직접 지정
     if not is_webview2_installed():
-        edge_paths = [
-            r'C:\Program Files (x86)\Microsoft\Edge\Application',
-            r'C:\Program Files\Microsoft\Edge\Application',
-        ]
-        for p in edge_paths:
-            if os.path.exists(os.path.join(p, 'msedge.exe')):
-                os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = p
+        for base in [r'C:\Program Files (x86)\Microsoft\Edge\Application',
+                     r'C:\Program Files\Microsoft\Edge\Application']:
+            if not os.path.isdir(base):
+                continue
+            for name in os.listdir(base):
+                ver_path = os.path.join(base, name)
+                if os.path.isdir(ver_path) and name[0].isdigit():
+                    os.environ['WEBVIEW2_BROWSER_EXECUTABLE_FOLDER'] = ver_path
+                    break
+            if 'WEBVIEW2_BROWSER_EXECUTABLE_FOLDER' in os.environ:
                 break
 
     src_dir = get_resource_path()
