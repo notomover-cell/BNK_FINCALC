@@ -5,7 +5,7 @@ a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[('src', 'src')],
+    datas=[('src', 'src'), ('MicrosoftEdgeWebview2Setup.exe', '.')],
     hiddenimports=[
         'webview',
         'webview.platforms.edgechromium',
