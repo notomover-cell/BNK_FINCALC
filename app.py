@@ -4,6 +4,7 @@ import sys
 import subprocess
 import threading
 import time
+import urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from functools import partial
 
@@ -48,6 +49,17 @@ def start_local_server(directory, port=18923):
     raise RuntimeError('사용 가능한 포트를 찾을 수 없습니다.')
 
 
+def wait_for_server(port, timeout=5):
+    """서버 준비 완료 대기"""
+    for _ in range(timeout * 10):
+        try:
+            urllib.request.urlopen(f'http://127.0.0.1:{port}/index.html', timeout=0.5)
+            return True
+        except Exception:
+            time.sleep(0.1)
+    return False
+
+
 def find_edge():
     """Edge 실행파일 경로 탐색"""
     candidates = [
@@ -65,12 +77,13 @@ def main():
     port = start_local_server(src_dir)
     url = f'http://127.0.0.1:{port}/index.html'
 
+    # 서버 준비 확인
+    wait_for_server(port)
+
     edge = find_edge()
     if edge is None:
-        # Edge 없으면 기본 브라우저로 열기
         import webbrowser
         webbrowser.open(url)
-        # 서버 유지
         try:
             while True:
                 time.sleep(1)
@@ -78,16 +91,18 @@ def main():
             pass
         return
 
-    # Edge --app 모드로 실행
+    # Edge --app 모드로 실행 (독립 프로필로 기존 Edge와 분리)
+    user_data = os.path.join(os.environ.get('TEMP', '.'), 'BNK_FINCALC_edge')
     proc = subprocess.Popen([
         edge,
         f'--app={url}',
         '--window-size=460,780',
         '--disable-extensions',
         '--disable-sync',
+        f'--user-data-dir={user_data}',
     ])
 
-    # Edge 프로세스 종료 대기 → 서버도 종료
+    # Edge 프로세스 종료 대기
     proc.wait()
 
 
