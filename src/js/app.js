@@ -1349,7 +1349,7 @@ function fmtShort(n) {
 // EASTER EGG — 로고 더블클릭
 // ══════════════════════════════════════════════════════
 document.getElementById('titleLogo').addEventListener('dblclick', () => {
-  showToast('v1.0.0 · Made by 디지털전략부 · 2026-04-05');
+  showToast('v1.1.0 · Made by 손우창, 안종환 · 2026-04-09');
 });
 
 // ══════════════════════════════════════════════════════
