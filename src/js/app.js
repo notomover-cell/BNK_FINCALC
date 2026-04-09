@@ -603,6 +603,33 @@ function openSettings() {
     }
   });
   document.getElementById('settingsOverlay').classList.add('open');
+  checkStartupStatus();
+}
+
+// 시작프로그램 등록 상태 확인
+function checkStartupStatus() {
+  const btn = document.getElementById('startupToggle');
+  if (!btn) return;
+  fetch('/api/startup').then(r => r.json()).then(data => {
+    btn.textContent = data.registered ? '해제하기' : '등록하기';
+    btn.classList.toggle('btn--danger', data.registered);
+  }).catch(() => {
+    btn.textContent = '사용 불가';
+    btn.disabled = true;
+  });
+}
+
+// 시작프로그램 등록/해제 토글
+function toggleStartup() {
+  const btn = document.getElementById('startupToggle');
+  if (!btn) return;
+  const isRegistered = btn.textContent === '해제하기';
+  const url = isRegistered ? '/api/startup/unregister' : '/api/startup/register';
+  fetch(url, { method: 'POST' }).then(r => r.json()).then(data => {
+    btn.textContent = data.registered ? '해제하기' : '등록하기';
+    btn.classList.toggle('btn--danger', data.registered);
+    showToast(data.registered ? '시작프로그램에 등록되었습니다.' : '시작프로그램에서 해제되었습니다.');
+  }).catch(() => showToast('시작프로그램 설정에 실패했습니다.'));
 }
 
 function closeSettings() {

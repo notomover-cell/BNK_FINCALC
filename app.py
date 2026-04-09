@@ -1,6 +1,7 @@
 """BNK 금융계산기 — Edge --app 모드"""
 import os
 import sys
+import json
 import subprocess
 import threading
 import time
@@ -14,6 +15,50 @@ def get_resource_path():
     if getattr(sys, '_MEIPASS', None):
         return os.path.join(sys._MEIPASS, 'src')
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
+
+
+def get_exe_path():
+    """현재 실행 중인 EXE 경로 반환"""
+    if getattr(sys, '_MEIPASS', None):
+        return sys.executable
+    return os.path.abspath(__file__)
+
+
+def get_startup_shortcut_path():
+    """시작프로그램 폴더 내 바로가기 경로"""
+    startup = os.path.join(os.environ.get('APPDATA', ''), r'Microsoft\Windows\Start Menu\Programs\Startup')
+    return os.path.join(startup, 'BNK_금융계산기.lnk')
+
+
+def is_startup_registered():
+    """시작프로그램 등록 여부 확인"""
+    return os.path.exists(get_startup_shortcut_path())
+
+
+def register_startup():
+    """시작프로그램에 등록 (vbs로 바로가기 생성)"""
+    lnk_path = get_startup_shortcut_path()
+    target = get_exe_path()
+    vbs = f'''Set s=CreateObject("WScript.Shell")
+Set sc=s.CreateShortcut("{lnk_path}")
+sc.TargetPath="{target}"
+sc.WorkingDirectory="{os.path.dirname(target)}"
+sc.Save'''
+    vbs_path = os.path.join(os.environ.get('TEMP', '.'), 'create_shortcut.vbs')
+    with open(vbs_path, 'w', encoding='utf-8') as f:
+        f.write(vbs)
+    subprocess.run(['cscript', '//nologo', vbs_path], shell=True)
+    try:
+        os.remove(vbs_path)
+    except OSError:
+        pass
+
+
+def unregister_startup():
+    """시작프로그램에서 제거"""
+    lnk_path = get_startup_shortcut_path()
+    if os.path.exists(lnk_path):
+        os.remove(lnk_path)
 
 
 class FixedMIMEHandler(SimpleHTTPRequestHandler):
@@ -31,6 +76,31 @@ class FixedMIMEHandler(SimpleHTTPRequestHandler):
         '.woff': 'font/woff',
         '.woff2': 'font/woff2',
     }
+
+    def do_GET(self):
+        if self.path == '/api/startup':
+            self._json_response({'registered': is_startup_registered()})
+        else:
+            super().do_GET()
+
+    def do_POST(self):
+        if self.path == '/api/startup/register':
+            register_startup()
+            self._json_response({'registered': True})
+        elif self.path == '/api/startup/unregister':
+            unregister_startup()
+            self._json_response({'registered': False})
+        else:
+            self.send_error(404)
+
+    def _json_response(self, data):
+        body = json.dumps(data).encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', len(body))
+        self.end_headers()
+        self.wfile.write(body)
+
     def log_message(self, format, *args):
         pass
 
