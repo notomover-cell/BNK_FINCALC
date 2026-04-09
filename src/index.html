@@ -922,9 +922,20 @@
         <div class="settings-field">
           <label class="settings-field__label">표시 폰트</label>
           <div class="input-wrap">
-            <input type="text" id="set-custom-font" placeholder="예: NanumSquare, 맑은 고딕" style="font-size:13px">
+            <select id="set-custom-font">
+              <option value="">기본 (나눔스퀘어→시스템 폰트)</option>
+              <option value="NanumSquare">나눔스퀘어</option>
+              <option value="NanumSquareRound">나눔스퀘어라운드</option>
+              <option value="NanumGothic">나눔고딕</option>
+              <option value="NanumMyeongjo">나눔명조</option>
+              <option value="Malgun Gothic">맑은 고딕</option>
+              <option value="Pretendard">프리텐다드</option>
+              <option value="Gulim">굴림</option>
+              <option value="Dotum">돋움</option>
+              <option value="D2Coding">D2Coding</option>
+            </select>
           </div>
-          <div class="settings-field__hint">시스템에 설치된 폰트명 입력. 비우면 기본값(나눔스퀘어→시스템 폰트)</div>
+          <div class="settings-field__hint">시스템에 설치된 폰트만 적용됩니다</div>
         </div>
       </div>
 

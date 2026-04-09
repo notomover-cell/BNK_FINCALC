@@ -610,8 +610,8 @@ function openSettings() {
     }
   });
   // 커스텀 폰트 설정값 로드
-  const fontInput = document.getElementById('set-custom-font');
-  if (fontInput) fontInput.value = localStorage.getItem('customFont') || '';
+  const fontSelect = document.getElementById('set-custom-font');
+  if (fontSelect) fontSelect.value = localStorage.getItem('customFont') || '';
 
   document.getElementById('settingsOverlay').classList.add('open');
   checkStartupStatus();
@@ -666,7 +666,7 @@ function saveSettings() {
   savePolicy();
 
   // 커스텀 폰트 저장 및 적용
-  const customFont = document.getElementById('set-custom-font')?.value.trim();
+  const customFont = document.getElementById('set-custom-font')?.value;
   if (customFont) {
     localStorage.setItem('customFont', customFont);
   } else {
