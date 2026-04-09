@@ -372,17 +372,17 @@ function showToast(msg) {
 // TAB DATA
 // ══════════════════════════════════════════════════════
 const TAB_META = {
-  deposit:  { label: '예금',      icon: '💰' },
-  savings:  { label: '적금',      icon: '🏦' },
-  loan:     { label: '대출',      icon: '💳' },
-  mortgage: { label: '주담대종합', icon: '🏠' },
-  ltv:      { label: 'LTV',       icon: '📊' },
-  dti:      { label: 'DTI',       icon: '📈' },
-  dsr:      { label: 'DSR',       icon: '📉' },
-  prepay:   { label: '중도상환',   icon: '🔄' },
-  calc:     { label: '계산기',    icon: '🔢' },
-  todo:     { label: '할일',     icon: '✅' },
-  history:  { label: '이력',      icon: '📋' }
+  calc:     { label: '계산기',    icon: '🔢', category: 'basic' },
+  todo:     { label: '할일',     icon: '✅', category: 'basic' },
+  history:  { label: '이력',      icon: '📋', category: 'basic' },
+  deposit:  { label: '예금',      icon: '💰', category: 'deposit' },
+  savings:  { label: '적금',      icon: '🏦', category: 'deposit' },
+  loan:     { label: '대출',      icon: '💳', category: 'loan' },
+  mortgage: { label: '주담대종합', icon: '🏠', category: 'loan' },
+  ltv:      { label: 'LTV',       icon: '📊', category: 'loan' },
+  dti:      { label: 'DTI',       icon: '📈', category: 'loan' },
+  dsr:      { label: 'DSR',       icon: '📉', category: 'loan' },
+  prepay:   { label: '중도상환',   icon: '🔄', category: 'loan' },
 };
 
 const TAB_ORDER = Object.keys(TAB_META);
@@ -439,16 +439,23 @@ function getHiddenTabs() {
 }
 
 function renderMegaMenu() {
-  const activeTab = document.querySelector('.tab-nav__item.active')?.dataset.tab;
-  const allGrid = document.getElementById('megaAllGrid');
+  const activeTab = document.querySelector('.tab-nav__item.active')?.dataset.tab
+    || document.querySelector('.tab-nav__fixed-item.active')?.dataset.tab;
+  const categories = {
+    basic:   document.getElementById('megaGridBasic'),
+    deposit: document.getElementById('megaGridDeposit'),
+    loan:    document.getElementById('megaGridLoan'),
+  };
+  Object.values(categories).forEach(el => el.innerHTML = '');
 
-  allGrid.innerHTML = TAB_ORDER.map(tab => {
+  TAB_ORDER.forEach(tab => {
     const meta = TAB_META[tab];
     const isFav = favorites.includes(tab);
-    return `<button class="mega-menu__item ${tab === activeTab ? 'active' : ''}" data-mega-tab="${tab}">
+    const html = `<button class="mega-menu__item ${tab === activeTab ? 'active' : ''}" data-mega-tab="${tab}">
       ${meta.label}<span class="fav-star ${isFav ? 'is-fav' : ''}" data-fav-tab="${tab}" title="즐겨찾기">${isFav ? '★' : '☆'}</span>
     </button>`;
-  }).join('');
+    categories[meta.category].insertAdjacentHTML('beforeend', html);
+  });
 }
 
 function openMegaMenu() {
