@@ -644,7 +644,7 @@ function toggleStartup() {
 
 function applyCustomFont() {
   const customFont = localStorage.getItem('customFont');
-  const fallback = "'NanumSquare', 'NanumSquareRound', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif";
+  const fallback = "'Pretendard', 'Malgun Gothic', '맑은 고딕', 'NanumGothic', '나눔고딕', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   if (customFont) {
     document.documentElement.style.setProperty('--font', `'${customFont}', ${fallback}`);
   } else {
