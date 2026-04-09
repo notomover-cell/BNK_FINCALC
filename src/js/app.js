@@ -102,6 +102,12 @@ function restoreFormSnapshot(tabId, snap) {
       if (inp) inp.value = val;
     }
   });
+  // 조건부 필드 visibility 갱신
+  if (tabId === 'loan') {
+    const method = getToggle('loan-repay-type');
+    const splitOpts = document.getElementById('loan-split-opts');
+    if (splitOpts) splitOpts.style.display = method === 'principal' ? '' : 'none';
+  }
 }
 
 function setFormDisabled(tabId, disabled) {
@@ -495,11 +501,11 @@ document.addEventListener('click', (e) => {
     if (feeField) feeField.style.display = (v === 'send' || v === 'receive') ? '' : 'none';
   }
 
-  // 할부/분할 전환
-  if (group.dataset.field === 'loan-category') {
-    const isSplit = btn.dataset.value === 'split';
+  // 상환방식 전환 — 원금균등(분할)일 때만 분할단위/차액납부 표시
+  if (group.dataset.field === 'loan-repay-type') {
+    const isPrincipal = btn.dataset.value === 'principal';
     const splitOpts = document.getElementById('loan-split-opts');
-    if (splitOpts) splitOpts.style.display = isSplit ? '' : 'none';
+    if (splitOpts) splitOpts.style.display = isPrincipal ? '' : 'none';
   }
 
   // History filter change
@@ -713,45 +719,53 @@ function calcAnnualRepay(principal, annualRate, months, method) {
   return principal * mr * 12;
 }
 
-function calcMonthlyPayment(principal, annualRate, months, method, roundUnit, roundMethod) {
-  if (principal <= 0 || months <= 0) return { monthly: 0, totalInterest: 0, first: 0, last: 0 };
+function calcMonthlyPayment(principal, annualRate, totalMonths, method, roundUnit, roundMethod, gracePeriod) {
+  if (principal <= 0 || totalMonths <= 0) return { monthly: 0, totalInterest: 0, first: 0, last: 0, graceInterest: 0 };
   const mr = annualRate / 100 / 12;
+  const grace = gracePeriod || 0;
+  const months = totalMonths - grace; // 실제 상환 개월수
+  const graceMonthlyInterest = principal * mr;
+  const graceInterest = graceMonthlyInterest * grace;
+
+  if (months <= 0) {
+    // 거치기간이 전체 기간 이상이면 이자만 납부
+    return { monthly: graceMonthlyInterest, totalInterest: graceInterest, first: graceMonthlyInterest, last: graceMonthlyInterest, graceInterest };
+  }
 
   if (method === 'equal') {
     // 원리금균등 — 절사 없음
     if (mr === 0) {
       const m = Math.round(principal / months);
-      return { monthly: m, totalInterest: 0, first: m, last: m };
+      return { monthly: m, totalInterest: graceInterest, first: m, last: m, graceInterest };
     }
     const monthly = principal * mr * Math.pow(1 + mr, months) / (Math.pow(1 + mr, months) - 1);
-    const totalRepay = monthly * months;
-    return { monthly, totalInterest: totalRepay - principal, first: monthly, last: monthly };
+    const repayInterest = monthly * months - principal;
+    return { monthly, totalInterest: graceInterest + repayInterest, first: monthly, last: monthly, graceInterest };
   }
   if (method === 'principal') {
     // 원금균등 — 원금 절사 적용, 이자는 절사 안함
     const ru = roundUnit || 1;
     function trunc(v) { return Math.floor(v / ru) * ru; }
     const mp = trunc(principal / months);
-    const diff = principal - mp * months; // 절사 차액
-    let totalInterest = 0;
+    const diff = principal - mp * months;
+    let repayInterest = 0;
     let balance = principal;
-    let first = mp + balance * mr; // 이자는 절사 안함
+    let first = mp + balance * mr;
     let last = 0;
     for (let k = 1; k <= months; k++) {
       const interest = balance * mr;
-      totalInterest += interest;
+      repayInterest += interest;
       if (k === months) last = mp + interest;
       balance -= mp;
     }
-    // 절사 차액을 최초 또는 최종 원금에 더함
     if (roundMethod === 'first') first += diff;
     else last += diff;
-    return { monthly: null, totalInterest: Math.round(totalInterest), first, last };
+    return { monthly: null, totalInterest: Math.round(graceInterest + repayInterest), first, last, graceInterest };
   }
   // bullet (만기일시) — 절사 없음
   const monthlyInterest = principal * mr;
-  const totalInterest = monthlyInterest * months;
-  return { monthly: monthlyInterest, totalInterest, first: monthlyInterest, last: monthlyInterest + principal };
+  const totalInterest = monthlyInterest * totalMonths;
+  return { monthly: monthlyInterest, totalInterest, first: monthlyInterest, last: monthlyInterest + principal, graceInterest };
 }
 
 // ══════════════════════════════════════════════════════
@@ -822,22 +836,21 @@ function calcSavings() {
 // ── 대출 ───────────────────────────────────────────────
 function calcLoan() {
   const principal = parseNum('loan-amount');
-  const months = getMonths('loan-period', 'loan-period-unit');
+  const totalMonths = getMonths('loan-period', 'loan-period-unit');
   const rate = parseNum('loan-rate');
-  const category = getToggle('loan-category') || 'installment';
-  let method, roundUnit = 1, roundMethod = 'last';
+  const method = getToggle('loan-repay-type') || 'equal';
+  const gracePeriod = parseNum('loan-grace') || 0;
+  let roundUnit = 1, roundMethod = 'last';
 
-  if (category === 'split') {
-    method = getToggle('loan-repay-type') || 'principal';
+  if (method === 'principal') {
     roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
     roundMethod = getToggle('loan-round-method') || 'last';
-  } else {
-    method = 'equal'; // 할부 = 원리금균등 고정
   }
 
-  if (principal <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
+  if (principal <= 0 || totalMonths <= 0) return alert('금액과 기간을 입력해주세요.');
+  if (gracePeriod >= totalMonths && method !== 'bullet') return alert('거치기간이 대출기간보다 길 수 없습니다.');
 
-  const result = calcMonthlyPayment(principal, rate, months, method, roundUnit, roundMethod);
+  const result = calcMonthlyPayment(principal, rate, totalMonths, method, roundUnit, roundMethod, gracePeriod);
 
   document.getElementById('loan-r-principal').textContent = fmt(principal);
   document.getElementById('loan-r-interest').textContent = fmt(result.totalInterest);
@@ -845,15 +858,16 @@ function calcLoan() {
 
   const label = document.getElementById('loan-r-monthly-label');
   const value = document.getElementById('loan-r-monthly');
+  const graceNote = gracePeriod > 0 ? ' (거치 후)' : '';
 
   if (method === 'principal') {
-    label.textContent = '매월 상환금액 (첫 달 ~ 마지막 달)';
+    label.textContent = '매월 상환금액' + graceNote + ' (첫 달 ~ 마지막 달)';
     value.innerHTML = fmt(result.first).replace('원', '') + ' ~ ' + fmt(result.last).replace('원', '<span>원</span>');
   } else if (method === 'bullet') {
     label.textContent = '매월 이자 / 만기 상환';
     value.innerHTML = fmt(result.monthly).replace('원', '') + ' / ' + fmt(result.last).replace('원', '<span>원</span>');
   } else {
-    label.textContent = '매월 상환금액';
+    label.textContent = '매월 상환금액' + graceNote;
     value.innerHTML = fmt(result.monthly).replace('원', '<span>원</span>');
   }
 
@@ -875,58 +889,65 @@ function showSchedule() {
   if (wrap.style.display !== 'none') { wrap.style.display = 'none'; return; }
 
   const principal = parseNum('loan-amount');
-  const months = getMonths('loan-period', 'loan-period-unit');
+  const totalMonths = getMonths('loan-period', 'loan-period-unit');
   const annualRate = parseNum('loan-rate');
-  const category = getToggle('loan-category') || 'installment';
-  let method, roundUnit = 1, roundMethod = 'last';
-  if (category === 'split') {
-    method = getToggle('loan-repay-type') || 'principal';
+  const method = getToggle('loan-repay-type') || 'equal';
+  const gracePeriod = parseNum('loan-grace') || 0;
+  let roundUnit = 1, roundMethod = 'last';
+  if (method === 'principal') {
     roundUnit = parseInt(getToggle('loan-round-unit')) || 1000;
     roundMethod = getToggle('loan-round-method') || 'last';
-  } else {
-    method = 'equal';
   }
   const mr = annualRate / 100 / 12;
+  const repayMonths = totalMonths - gracePeriod;
 
-  if (principal <= 0 || months <= 0) return;
+  if (principal <= 0 || totalMonths <= 0) return;
 
   let rows = [];
   let balance = principal;
+  let seq = 1;
 
-  if (method === 'equal') {
-    // 원리금균등 — 절사 없음
-    const monthly = mr === 0 ? principal / months :
-      principal * mr * Math.pow(1 + mr, months) / (Math.pow(1 + mr, months) - 1);
-    for (let k = 1; k <= months; k++) {
-      const interest = balance * mr;
-      const principalPay = monthly - interest;
-      balance -= principalPay;
-      rows.push({ k, payment: monthly, principalPay, interest, balance: Math.max(0, balance) });
-    }
-  } else if (method === 'principal') {
-    // 원금균등 — 원금 절사, 이자 절사 안함
-    const ru = roundUnit;
-    function trunc(v) { return Math.floor(v / ru) * ru; }
-    const mp = trunc(principal / months);
-    const diff = principal - mp * months;
-    for (let k = 1; k <= months; k++) {
-      const interest = balance * mr; // 이자 절사 안함
-      let curMp = mp;
-      if (roundMethod === 'first' && k === 1) curMp += diff;
-      else if (roundMethod === 'last' && k === months) curMp += diff;
-      const payment = curMp + interest;
-      balance -= curMp;
-      if (k === months) balance = 0;
-      rows.push({ k, payment, principalPay: curMp, interest, balance: Math.max(0, balance) });
-    }
-  } else {
-    // bullet (만기일시) — 절사 없음
-    const interest = principal * mr;
-    for (let k = 1; k <= months; k++) {
-      const isLast = k === months;
-      const principalPay = isLast ? principal : 0;
-      const payment = interest + principalPay;
-      rows.push({ k, payment, principalPay, interest, balance: isLast ? 0 : principal });
+  // 거치기간 — 이자만 납부
+  for (let k = 0; k < gracePeriod; k++) {
+    const interest = balance * mr;
+    rows.push({ k: seq++, payment: interest, principalPay: 0, interest, balance, grace: true });
+  }
+
+  // 상환기간
+  if (repayMonths > 0) {
+    if (method === 'equal') {
+      const monthly = mr === 0 ? principal / repayMonths :
+        principal * mr * Math.pow(1 + mr, repayMonths) / (Math.pow(1 + mr, repayMonths) - 1);
+      for (let k = 1; k <= repayMonths; k++) {
+        const interest = balance * mr;
+        const principalPay = monthly - interest;
+        balance -= principalPay;
+        rows.push({ k: seq++, payment: monthly, principalPay, interest, balance: Math.max(0, balance) });
+      }
+    } else if (method === 'principal') {
+      const ru = roundUnit;
+      function trunc(v) { return Math.floor(v / ru) * ru; }
+      const mp = trunc(principal / repayMonths);
+      const diff = principal - mp * repayMonths;
+      for (let k = 1; k <= repayMonths; k++) {
+        const interest = balance * mr;
+        let curMp = mp;
+        if (roundMethod === 'first' && k === 1) curMp += diff;
+        else if (roundMethod === 'last' && k === repayMonths) curMp += diff;
+        const payment = curMp + interest;
+        balance -= curMp;
+        if (k === repayMonths) balance = 0;
+        rows.push({ k: seq++, payment, principalPay: curMp, interest, balance: Math.max(0, balance) });
+      }
+    } else {
+      // bullet (만기일시)
+      const interest = principal * mr;
+      for (let k = 1; k <= repayMonths; k++) {
+        const isLast = k === repayMonths;
+        const principalPay = isLast ? principal : 0;
+        const payment = interest + principalPay;
+        rows.push({ k: seq++, payment, principalPay, interest, balance: isLast ? 0 : principal });
+      }
     }
   }
 
@@ -936,7 +957,7 @@ function showSchedule() {
     <table class="schedule-table">
       <thead><tr><th>회차</th><th>상환액</th><th>원금</th><th>이자</th><th>잔액</th></tr></thead>
       <tbody>
-        ${rows.map(r => `<tr><td>${r.k}</td><td>${n(r.payment)}</td><td>${n(r.principalPay)}</td><td>${n(r.interest)}</td><td>${n(r.balance)}</td></tr>`).join('')}
+        ${rows.map(r => `<tr${r.grace ? ' class="grace-row"' : ''}><td>${r.k}</td><td>${n(r.payment)}</td><td>${n(r.principalPay)}</td><td>${n(r.interest)}</td><td>${n(r.balance)}</td></tr>`).join('')}
       </tbody>
     </table>
   `;
