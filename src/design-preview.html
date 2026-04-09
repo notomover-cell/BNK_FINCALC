@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNK 금융계산기 — 디자인 옵션 비교</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    font-size: 13px; line-height: 1.5;
+    background: #E8EAED; color: #333;
+    padding: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 800; margin-bottom: 6px; text-align: center; }
+  .subtitle { font-size: 12px; color: #666; text-align: center; margin-bottom: 20px; }
+
+  /* Theme toggle */
+  .theme-toggle {
+    display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;
+  }
+  .theme-toggle button {
+    padding: 8px 20px; font-size: 12px; font-weight: 600;
+    border: 2px solid #CCC; border-radius: 8px;
+    background: #FFF; cursor: pointer; transition: all 0.15s;
+  }
+  .theme-toggle button.active {
+    border-color: #3182F6; background: #3182F6; color: #FFF;
+  }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 1800px; margin: 0 auto; }
+  @media (max-width: 1400px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Each preview card */
+  .preview {
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+  }
+  .preview:hover { transform: translateY(-2px); }
+  .preview__label {
+    padding: 10px 16px; font-size: 11px; font-weight: 700;
+    text-align: center; letter-spacing: 0.04em;
+  }
+
+  /* ===== OPTION THEMES ===== */
+  /* Each option has its own CSS variables scoped to its container */
+
+  /* -- Current (Toss) -- */
+  .opt-current { --bg:#FFFFFF; --bg-subtle:#F2F4F6; --primary:#3182F6; --primary-hover:#1B64DA;
+    --primary-alpha:rgba(49,130,246,0.08); --secondary:#191F28; --subtle:#4E5968;
+    --text:#191F28; --text-sub:#8B95A1; --border:#E5E8EB; --divider:#F2F4F6;
+    --red:#F04452; --green:#30A952; --title-bg:#191F28; --title-text:#FFFFFF;
+    --radius:6px; --radius-lg:10px; --shadow-border: none; --btn-radius: 6px; }
+  .opt-current.dark { --bg:#17171C; --bg-subtle:#212126; --primary:#5CA0FA; --primary-hover:#7AB5FB;
+    --primary-alpha:rgba(92,160,250,0.14); --secondary:#3A3D46; --subtle:#A0A8B4;
+    --text:#F5F5F7; --text-sub:#9A9FAB; --border:#3D3E44; --divider:#2C2D32;
+    --red:#FF7B7B; --green:#5DE076; --title-bg:#111113; --title-text:#F5F5F7; }
+
+  /* -- Option A: Notion (Warm) -- */
+  .opt-a { --bg:#FAFAF8; --bg-subtle:#F3F2F0; --primary:#2F81F7; --primary-hover:#1A6FDB;
+    --primary-alpha:rgba(47,129,247,0.08); --secondary:#31302E; --subtle:#787673;
+    --text:#31302E; --text-sub:#9B9895; --border:#E8E5E2; --divider:#F3F2F0;
+    --red:#EB5757; --green:#27AE60; --title-bg:#31302E; --title-text:#FAFAF8;
+    --radius:8px; --radius-lg:12px; --shadow-border: none; --btn-radius: 8px; }
+  .opt-a.dark { --bg:#1F1F1E; --bg-subtle:#2A2A28; --primary:#6DAAFF; --primary-hover:#8BBFFF;
+    --primary-alpha:rgba(109,170,255,0.12); --secondary:#3D3C39; --subtle:#A8A5A0;
+    --text:#EDECE9; --text-sub:#8D8A86; --border:#3D3C39; --divider:#333230;
+    --red:#FF8A8A; --green:#6ECF8E; --title-bg:#171716; --title-text:#EDECE9; }
+
+  /* -- Option B: Vercel (Monochrome) -- */
+  .opt-b { --bg:#FFFFFF; --bg-subtle:#FAFAFA; --primary:#0A72EF; --primary-hover:#0060D0;
+    --primary-alpha:rgba(10,114,239,0.08); --secondary:#171717; --subtle:#666666;
+    --text:#171717; --text-sub:#888888; --border:transparent; --divider:#FAFAFA;
+    --red:#EE4444; --green:#17A34A; --title-bg:#000000; --title-text:#FFFFFF;
+    --radius:6px; --radius-lg:6px; --btn-radius: 6px;
+    --shadow-border: 0 0 0 1px rgba(0,0,0,0.08); }
+  .opt-b.dark { --bg:#0A0A0A; --bg-subtle:#141414; --primary:#3291FF; --primary-hover:#52A5FF;
+    --primary-alpha:rgba(50,145,255,0.12); --secondary:#EDEDED; --subtle:#A1A1A1;
+    --text:#EDEDED; --text-sub:#888888; --border:transparent; --divider:#1A1A1A;
+    --red:#FF6B6B; --green:#4ADE80; --title-bg:#000000; --title-text:#EDEDED;
+    --shadow-border: 0 0 0 1px rgba(255,255,255,0.08); }
+
+  /* -- Option C: Revolut (Flat) -- */
+  .opt-c { --bg:#FFFFFF; --bg-subtle:#F5F5F5; --primary:#0066FF; --primary-hover:#0052CC;
+    --primary-alpha:rgba(0,102,255,0.06); --secondary:#191C1F; --subtle:#6B7280;
+    --text:#191C1F; --text-sub:#9CA3AF; --border:#EBEBEB; --divider:#F5F5F5;
+    --red:#EF4444; --green:#22C55E; --title-bg:#191C1F; --title-text:#FFFFFF;
+    --radius:12px; --radius-lg:16px; --shadow-border: none; --btn-radius: 9999px; }
+  .opt-c.dark { --bg:#161719; --bg-subtle:#1E2023; --primary:#4D94FF; --primary-hover:#6BABFF;
+    --primary-alpha:rgba(77,148,255,0.10); --secondary:#E5E7EB; --subtle:#9CA3AF;
+    --text:#F3F4F6; --text-sub:#6B7280; --border:#2D2F33; --divider:#1E2023;
+    --red:#F87171; --green:#4ADE80; --title-bg:#0D0E10; --title-text:#F3F4F6;
+    --shadow-border: none; }
+
+  /* ===== COMPONENT STYLES (shared across all options) ===== */
+  .p-inner {
+    background: var(--bg-subtle);
+    padding: 12px;
+    min-height: 480px;
+  }
+
+  .p-title-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 34px; padding: 0 12px;
+    background: var(--title-bg); color: var(--title-text);
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .p-title-bar span { opacity: 0.6; font-size: 10px; }
+
+  .p-tabs {
+    display: flex; background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-border);
+    overflow: hidden;
+  }
+  .p-tab {
+    padding: 7px 10px; font-size: 10.5px; font-weight: 500;
+    color: var(--text-sub); border: none; background: none;
+    border-bottom: 2px solid transparent; cursor: default; white-space: nowrap;
+  }
+  .p-tab.active {
+    color: var(--text); font-weight: 700;
+    border-bottom-color: var(--primary);
+  }
+
+  .p-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-border);
+    border-radius: var(--radius-lg);
+    padding: 14px; margin-bottom: 10px;
+  }
+  .p-card__title {
+    font-size: 12px; font-weight: 700; color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .p-field { margin-bottom: 10px; }
+  .p-field:last-child { margin-bottom: 0; }
+  .p-label {
+    display: block; font-size: 10.5px; font-weight: 600;
+    color: var(--text-sub); margin-bottom: 4px;
+  }
+  .p-input-wrap {
+    display: flex; align-items: center;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-border);
+    border-radius: var(--radius);
+    background: var(--bg); overflow: hidden;
+  }
+  .p-input-wrap input {
+    flex: 1; border: none; outline: none;
+    padding: 6px 8px; font-size: 12px; text-align: right;
+    background: transparent; color: var(--text);
+    font-family: inherit;
+  }
+  .p-input-wrap input::placeholder { color: var(--text-sub); opacity: 0.5; }
+  .p-suffix {
+    padding: 0 8px 0 0; font-size: 11px; color: var(--text-sub); flex-shrink: 0;
+  }
+
+  /* Focus simulation */
+  .p-input-wrap.focused {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-alpha);
+  }
+
+  .p-quick-btns { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
+  .p-quick-btn {
+    padding: 2px 8px; font-size: 10px; font-weight: 500;
+    color: var(--subtle); background: var(--bg);
+    border: 1px solid var(--border); box-shadow: var(--shadow-border);
+    border-radius: var(--btn-radius); cursor: default;
+  }
+
+  .p-toggle-group {
+    display: flex;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-border);
+    border-radius: var(--radius);
+    overflow: hidden; background: var(--divider);
+  }
+  .p-toggle-btn {
+    flex: 1; padding: 5px 6px; font-size: 10.5px; font-weight: 500;
+    color: var(--text-sub); background: transparent;
+    border: none; cursor: default; text-align: center; white-space: nowrap;
+  }
+  .p-toggle-btn + .p-toggle-btn { border-left: 1px solid var(--border); }
+  .p-toggle-btn.active {
+    background: var(--secondary); color: var(--title-text); font-weight: 600;
+  }
+
+  /* Revolut variant: pill toggle */
+  .opt-c .p-toggle-group {
+    background: var(--bg-subtle); border-color: transparent;
+    border-radius: var(--radius); gap: 3px; padding: 3px;
+  }
+  .opt-c .p-toggle-btn {
+    border-radius: calc(var(--radius) - 3px);
+    border: none !important;
+  }
+  .opt-c .p-toggle-btn.active {
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .opt-c .p-toggle-btn + .p-toggle-btn { border-left: none; }
+
+  /* Vercel variant: minimal toggle */
+  .opt-b .p-toggle-group {
+    background: transparent; border: none;
+    box-shadow: var(--shadow-border);
+  }
+  .opt-b .p-toggle-btn.active {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .p-action-row { display: flex; gap: 6px; margin-top: 10px; }
+  .p-btn {
+    padding: 8px 14px; font-size: 12px; font-weight: 600;
+    border-radius: var(--btn-radius); border: none; cursor: default;
+  }
+  .p-btn--reset {
+    background: var(--bg); color: var(--text-sub);
+    border: 1px solid var(--border); box-shadow: var(--shadow-border); flex-shrink: 0;
+  }
+  .p-btn--primary { flex: 1; background: var(--primary); color: #FFF; }
+
+  /* Result card */
+  .p-result {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .p-result__header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--secondary); color: var(--title-text);
+    font-size: 11.5px; font-weight: 700;
+  }
+  .p-result__body { padding: 12px 14px; }
+  .p-result-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 4px 0; font-size: 11.5px;
+  }
+  .p-result-row__label { color: var(--text-sub); }
+  .p-result-row__value { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .p-result-row__value--red { color: var(--red); }
+  .p-result-row__value--green { color: var(--green); }
+  .p-result-divider { border: none; border-top: 1px solid var(--divider); margin: 6px 0; }
+  .p-result-highlight {
+    background: var(--bg-subtle); border-radius: var(--radius);
+    padding: 10px; margin-top: 6px; text-align: center;
+  }
+  .p-result-highlight__label { font-size: 10px; color: var(--text-sub); margin-bottom: 2px; }
+  .p-result-highlight__value { font-size: 20px; font-weight: 800; color: var(--text); }
+  .p-result-highlight__value small { font-size: 12px; font-weight: 600; }
+
+  /* Revolut result header */
+  .opt-c .p-result__header {
+    background: var(--primary);
+    border-radius: 0;
+  }
+
+  /* Vercel result header */
+  .opt-b .p-result__header {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  /* Badge */
+  .p-badge {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 8px;
+    padding: 3px 8px; font-size: 10px; font-weight: 600;
+    border-radius: var(--btn-radius);
+    color: var(--subtle); background: var(--bg-subtle);
+    border: 1px solid var(--border); box-shadow: var(--shadow-border);
+  }
+
+  /* Tag row */
+  .p-tag-row { display: flex; gap: 4px; margin-top: 8px; justify-content: center; }
+  .p-tag {
+    padding: 2px 6px; font-size: 9px; font-weight: 600;
+    color: var(--subtle); background: var(--bg-subtle);
+    border-radius: var(--btn-radius); border: 1px solid var(--border);
+    box-shadow: var(--shadow-border);
+  }
+
+  /* Opt label colors */
+  .opt-current .preview__label { background: #191F28; color: #FFF; }
+  .opt-a .preview__label { background: #31302E; color: #FAFAF8; }
+  .opt-b .preview__label { background: #000; color: #FFF; }
+  .opt-c .preview__label { background: #0066FF; color: #FFF; }
+</style>
+</head>
+<body>
+
+<h1>BNK 금융계산기 — 디자인 옵션 비교</h1>
+<p class="subtitle">라이트/다크 전환 후 4가지 디자인을 비교하세요. 모든 옵션은 외부 폰트/CDN 없이 구현 가능합니다.</p>
+
+<div class="theme-toggle">
+  <button class="active" onclick="setMode('light')">☀ 라이트 모드</button>
+  <button onclick="setMode('dark')">🌙 다크 모드</button>
+</div>
+
+<div class="grid">
+
+  <!-- CURRENT -->
+  <div class="preview opt-current" id="opt-current">
+    <div class="preview__label">현재 (토스 스타일)</div>
+    <div class="p-title-bar">BNK 금융계산기 <span>● ■ ✕</span></div>
+    <div class="p-tabs">
+      <div class="p-tab">계산기</div>
+      <div class="p-tab active">대출</div>
+      <div class="p-tab">예금</div>
+      <div class="p-tab">적금</div>
+      <div class="p-tab">주담대</div>
+    </div>
+    <div class="p-inner">
+      <div class="p-card">
+        <div class="p-card__title">대출 계산</div>
+        <div class="p-field">
+          <label class="p-label">대출금액</label>
+          <div class="p-input-wrap">
+            <input type="text" value="100,000,000" readonly>
+            <span class="p-suffix">원</span>
+          </div>
+          <div class="p-quick-btns">
+            <div class="p-quick-btn">+1천</div>
+            <div class="p-quick-btn">+5천</div>
+            <div class="p-quick-btn">+1억</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">연이율</label>
+          <div class="p-input-wrap focused">
+            <input type="text" value="3.5" readonly>
+            <span class="p-suffix">%</span>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">상환방식</label>
+          <div class="p-toggle-group">
+            <div class="p-toggle-btn active">원리금균등</div>
+            <div class="p-toggle-btn">원금균등</div>
+            <div class="p-toggle-btn">만기일시</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">대출기간</label>
+          <div class="p-input-wrap">
+            <input type="text" value="360" readonly>
+            <span class="p-suffix">개월</span>
+          </div>
+        </div>
+        <div class="p-action-row">
+          <button class="p-btn p-btn--reset">초기화</button>
+          <button class="p-btn p-btn--primary">계산하기</button>
+        </div>
+      </div>
+
+      <div class="p-result">
+        <div class="p-result__header">계산 결과 <span>▲</span></div>
+        <div class="p-result__body">
+          <div class="p-result-row">
+            <span class="p-result-row__label">월 납입금</span>
+            <span class="p-result-row__value">449,045 원</span>
+          </div>
+          <hr class="p-result-divider">
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 이자</span>
+            <span class="p-result-row__value p-result-row__value--red">61,656,200 원</span>
+          </div>
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 상환금</span>
+            <span class="p-result-row__value">161,656,200 원</span>
+          </div>
+          <div class="p-result-highlight">
+            <div class="p-result-highlight__label">월 납입금</div>
+            <div class="p-result-highlight__value">449,045 <small>원</small></div>
+          </div>
+          <div class="p-tag-row">
+            <div class="p-tag">원리금균등</div>
+            <div class="p-tag">3.5%</div>
+            <div class="p-tag">30년</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION A: Notion -->
+  <div class="preview opt-a" id="opt-a">
+    <div class="preview__label">Option A — Notion (따뜻한 전문가)</div>
+    <div class="p-title-bar">BNK 금융계산기 <span>● ■ ✕</span></div>
+    <div class="p-tabs">
+      <div class="p-tab">계산기</div>
+      <div class="p-tab active">대출</div>
+      <div class="p-tab">예금</div>
+      <div class="p-tab">적금</div>
+      <div class="p-tab">주담대</div>
+    </div>
+    <div class="p-inner">
+      <div class="p-card">
+        <div class="p-card__title">대출 계산</div>
+        <div class="p-field">
+          <label class="p-label">대출금액</label>
+          <div class="p-input-wrap">
+            <input type="text" value="100,000,000" readonly>
+            <span class="p-suffix">원</span>
+          </div>
+          <div class="p-quick-btns">
+            <div class="p-quick-btn">+1천</div>
+            <div class="p-quick-btn">+5천</div>
+            <div class="p-quick-btn">+1억</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">연이율</label>
+          <div class="p-input-wrap focused">
+            <input type="text" value="3.5" readonly>
+            <span class="p-suffix">%</span>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">상환방식</label>
+          <div class="p-toggle-group">
+            <div class="p-toggle-btn active">원리금균등</div>
+            <div class="p-toggle-btn">원금균등</div>
+            <div class="p-toggle-btn">만기일시</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">대출기간</label>
+          <div class="p-input-wrap">
+            <input type="text" value="360" readonly>
+            <span class="p-suffix">개월</span>
+          </div>
+        </div>
+        <div class="p-action-row">
+          <button class="p-btn p-btn--reset">초기화</button>
+          <button class="p-btn p-btn--primary">계산하기</button>
+        </div>
+      </div>
+
+      <div class="p-result">
+        <div class="p-result__header">계산 결과 <span>▲</span></div>
+        <div class="p-result__body">
+          <div class="p-result-row">
+            <span class="p-result-row__label">월 납입금</span>
+            <span class="p-result-row__value">449,045 원</span>
+          </div>
+          <hr class="p-result-divider">
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 이자</span>
+            <span class="p-result-row__value p-result-row__value--red">61,656,200 원</span>
+          </div>
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 상환금</span>
+            <span class="p-result-row__value">161,656,200 원</span>
+          </div>
+          <div class="p-result-highlight">
+            <div class="p-result-highlight__label">월 납입금</div>
+            <div class="p-result-highlight__value">449,045 <small>원</small></div>
+          </div>
+          <div class="p-tag-row">
+            <div class="p-tag">원리금균등</div>
+            <div class="p-tag">3.5%</div>
+            <div class="p-tag">30년</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION B: Vercel -->
+  <div class="preview opt-b" id="opt-b">
+    <div class="preview__label">Option B — Vercel (절제된 모노크롬)</div>
+    <div class="p-title-bar">BNK 금융계산기 <span>● ■ ✕</span></div>
+    <div class="p-tabs">
+      <div class="p-tab">계산기</div>
+      <div class="p-tab active">대출</div>
+      <div class="p-tab">예금</div>
+      <div class="p-tab">적금</div>
+      <div class="p-tab">주담대</div>
+    </div>
+    <div class="p-inner">
+      <div class="p-card">
+        <div class="p-card__title">대출 계산</div>
+        <div class="p-field">
+          <label class="p-label">대출금액</label>
+          <div class="p-input-wrap">
+            <input type="text" value="100,000,000" readonly>
+            <span class="p-suffix">원</span>
+          </div>
+          <div class="p-quick-btns">
+            <div class="p-quick-btn">+1천</div>
+            <div class="p-quick-btn">+5천</div>
+            <div class="p-quick-btn">+1억</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">연이율</label>
+          <div class="p-input-wrap focused">
+            <input type="text" value="3.5" readonly>
+            <span class="p-suffix">%</span>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">상환방식</label>
+          <div class="p-toggle-group">
+            <div class="p-toggle-btn active">원리금균등</div>
+            <div class="p-toggle-btn">원금균등</div>
+            <div class="p-toggle-btn">만기일시</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">대출기간</label>
+          <div class="p-input-wrap">
+            <input type="text" value="360" readonly>
+            <span class="p-suffix">개월</span>
+          </div>
+        </div>
+        <div class="p-action-row">
+          <button class="p-btn p-btn--reset">초기화</button>
+          <button class="p-btn p-btn--primary">계산하기</button>
+        </div>
+      </div>
+
+      <div class="p-result">
+        <div class="p-result__header">계산 결과 <span>▲</span></div>
+        <div class="p-result__body">
+          <div class="p-result-row">
+            <span class="p-result-row__label">월 납입금</span>
+            <span class="p-result-row__value">449,045 원</span>
+          </div>
+          <hr class="p-result-divider">
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 이자</span>
+            <span class="p-result-row__value p-result-row__value--red">61,656,200 원</span>
+          </div>
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 상환금</span>
+            <span class="p-result-row__value">161,656,200 원</span>
+          </div>
+          <div class="p-result-highlight">
+            <div class="p-result-highlight__label">월 납입금</div>
+            <div class="p-result-highlight__value">449,045 <small>원</small></div>
+          </div>
+          <div class="p-tag-row">
+            <div class="p-tag">원리금균등</div>
+            <div class="p-tag">3.5%</div>
+            <div class="p-tag">30년</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION C: Revolut -->
+  <div class="preview opt-c" id="opt-c">
+    <div class="preview__label">Option C — Revolut (플랫 핀테크)</div>
+    <div class="p-title-bar">BNK 금융계산기 <span>● ■ ✕</span></div>
+    <div class="p-tabs">
+      <div class="p-tab">계산기</div>
+      <div class="p-tab active">대출</div>
+      <div class="p-tab">예금</div>
+      <div class="p-tab">적금</div>
+      <div class="p-tab">주담대</div>
+    </div>
+    <div class="p-inner">
+      <div class="p-card">
+        <div class="p-card__title">대출 계산</div>
+        <div class="p-field">
+          <label class="p-label">대출금액</label>
+          <div class="p-input-wrap">
+            <input type="text" value="100,000,000" readonly>
+            <span class="p-suffix">원</span>
+          </div>
+          <div class="p-quick-btns">
+            <div class="p-quick-btn">+1천</div>
+            <div class="p-quick-btn">+5천</div>
+            <div class="p-quick-btn">+1억</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">연이율</label>
+          <div class="p-input-wrap focused">
+            <input type="text" value="3.5" readonly>
+            <span class="p-suffix">%</span>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">상환방식</label>
+          <div class="p-toggle-group">
+            <div class="p-toggle-btn active">원리금균등</div>
+            <div class="p-toggle-btn">원금균등</div>
+            <div class="p-toggle-btn">만기일시</div>
+          </div>
+        </div>
+        <div class="p-field">
+          <label class="p-label">대출기간</label>
+          <div class="p-input-wrap">
+            <input type="text" value="360" readonly>
+            <span class="p-suffix">개월</span>
+          </div>
+        </div>
+        <div class="p-action-row">
+          <button class="p-btn p-btn--reset">초기화</button>
+          <button class="p-btn p-btn--primary">계산하기</button>
+        </div>
+      </div>
+
+      <div class="p-result">
+        <div class="p-result__header">계산 결과 <span>▲</span></div>
+        <div class="p-result__body">
+          <div class="p-result-row">
+            <span class="p-result-row__label">월 납입금</span>
+            <span class="p-result-row__value">449,045 원</span>
+          </div>
+          <hr class="p-result-divider">
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 이자</span>
+            <span class="p-result-row__value p-result-row__value--red">61,656,200 원</span>
+          </div>
+          <div class="p-result-row">
+            <span class="p-result-row__label">총 상환금</span>
+            <span class="p-result-row__value">161,656,200 원</span>
+          </div>
+          <div class="p-result-highlight">
+            <div class="p-result-highlight__label">월 납입금</div>
+            <div class="p-result-highlight__value">449,045 <small>원</small></div>
+          </div>
+          <div class="p-tag-row">
+            <div class="p-tag">원리금균등</div>
+            <div class="p-tag">3.5%</div>
+            <div class="p-tag">30년</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setMode(mode) {
+  const btns = document.querySelectorAll('.theme-toggle button');
+  btns.forEach((b, i) => b.classList.toggle('active', (mode === 'light' ? i === 0 : i === 1)));
+  document.querySelectorAll('.preview').forEach(el => {
+    if (mode === 'dark') el.classList.add('dark');
+    else el.classList.remove('dark');
+  });
+}
+</script>
+</body>
+</html>
