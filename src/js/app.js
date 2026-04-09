@@ -609,6 +609,10 @@ function openSettings() {
       el.value = val;
     }
   });
+  // 커스텀 폰트 설정값 로드
+  const fontInput = document.getElementById('set-custom-font');
+  if (fontInput) fontInput.value = localStorage.getItem('customFont') || '';
+
   document.getElementById('settingsOverlay').classList.add('open');
   checkStartupStatus();
 }
@@ -639,6 +643,16 @@ function toggleStartup() {
   }).catch(() => showToast('시작프로그램 설정에 실패했습니다.'));
 }
 
+function applyCustomFont() {
+  const customFont = localStorage.getItem('customFont');
+  const fallback = "'NanumSquare', 'NanumSquareRound', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif";
+  if (customFont) {
+    document.documentElement.style.setProperty('--font', `'${customFont}', ${fallback}`);
+  } else {
+    document.documentElement.style.setProperty('--font', fallback);
+  }
+}
+
 function closeSettings() {
   document.getElementById('settingsOverlay').classList.remove('open');
 }
@@ -650,6 +664,15 @@ function saveSettings() {
     if (!isNaN(val)) policyVars[key] = val;
   });
   savePolicy();
+
+  // 커스텀 폰트 저장 및 적용
+  const customFont = document.getElementById('set-custom-font')?.value.trim();
+  if (customFont) {
+    localStorage.setItem('customFont', customFont);
+  } else {
+    localStorage.removeItem('customFont');
+  }
+  applyCustomFont();
 
   // Sync inline policy fields
   syncPolicyToForms();
@@ -1393,6 +1416,7 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
   loadPolicy();
   loadFavorites();
   loadTheme();
+  applyCustomFont();
   syncPolicyToForms();
   reorderTabs();
   renderMegaMenu();

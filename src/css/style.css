@@ -23,7 +23,7 @@
   --app-width: 440px;
   --radius: 6px;
   --radius-lg: 10px;
-  --font: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  --font: 'NanumSquare', 'NanumSquareRound', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif;
 }
 
 /* ── Dark Theme ── */
