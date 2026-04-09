@@ -624,6 +624,8 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 .schedule-table td:first-child { text-align: center; color: var(--text-sub); }
 .schedule-table tr:nth-child(even) { background: var(--bg-subtle); }
 .schedule-table tr:nth-child(12n) td { border-bottom: 2px solid var(--primary); }
+.schedule-table tr.grace-row { background: var(--bg-subtle); }
+.schedule-table tr.grace-row td { color: var(--text-sub); font-style: italic; }
 
 /* ===== Section Subheader ===== */
 .section-header {
