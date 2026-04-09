@@ -780,7 +780,7 @@ function calcDeposit() {
   const interestType = getToggle('dep-interest-type');
   const taxRate = getTaxRate('dep-tax-type');
 
-  if (principal <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
+  if (principal <= 0 || months <= 0) return showToast('금액과 기간을 입력해주세요.');
 
   let interest;
   if (interestType === 'simple') {
@@ -809,7 +809,7 @@ function calcSavings() {
   const interestType = getToggle('sav-interest-type');
   const taxRate = getTaxRate('sav-tax-type');
 
-  if (monthly <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
+  if (monthly <= 0 || months <= 0) return showToast('금액과 기간을 입력해주세요.');
 
   const totalPaid = monthly * months;
   let interest;
@@ -847,8 +847,8 @@ function calcLoan() {
     roundMethod = getToggle('loan-round-method') || 'last';
   }
 
-  if (principal <= 0 || totalMonths <= 0) return alert('금액과 기간을 입력해주세요.');
-  if (gracePeriod >= totalMonths && method !== 'bullet') return alert('거치기간이 대출기간보다 길 수 없습니다.');
+  if (principal <= 0 || totalMonths <= 0) return showToast('금액과 기간을 입력해주세요.');
+  if (gracePeriod >= totalMonths && method !== 'bullet') return showToast('거치기간이 대출기간보다 길 수 없습니다.');
 
   const result = calcMonthlyPayment(principal, rate, totalMonths, method, roundUnit, roundMethod, gracePeriod);
 
@@ -973,7 +973,7 @@ function calcLTV() {
   const existingLoan = parseNum('ltv-existing-loan');
   const smallDeposit = parseNum('ltv-small-deposit');
 
-  if (housePrice <= 0) return alert('담보주택 시세를 입력해주세요.');
+  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.');
 
   const ltvTable = {
     purchase: {
@@ -1027,8 +1027,8 @@ function calcDTI() {
   const existMortgage = parseNum('dti-exist-mortgage');
   const otherInterest = parseNum('dti-other-interest');
 
-  if (income <= 0) return alert('연소득을 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return alert('대출 정보를 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.');
+  if (loanAmount <= 0 || months <= 0) return showToast('대출 정보를 입력해주세요.');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
   const dti = (newAnnualRepay + existMortgage + otherInterest) / income * 100;
@@ -1058,8 +1058,8 @@ function calcDSR() {
   const region = getToggle('dsr-region');
   const rateType = getToggle('dsr-rate-type');
 
-  if (income <= 0) return alert('연소득을 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return alert('대출 정보를 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.');
+  if (loanAmount <= 0 || months <= 0) return showToast('대출 정보를 입력해주세요.');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
   const dsr = (newAnnualRepay + existRepay) / income * 100;
@@ -1109,8 +1109,8 @@ function calcPrepay() {
   const repayDate = document.getElementById('pre-repay-date').value;
   const feePeriodYears = parseNum('pre-fee-period');
 
-  if (amount <= 0) return alert('상환금액을 입력해주세요.');
-  if (!loanDate || !repayDate) return alert('대출일자와 상환일자를 입력해주세요.');
+  if (amount <= 0) return showToast('상환금액을 입력해주세요.');
+  if (!loanDate || !repayDate) return showToast('대출일자와 상환일자를 입력해주세요.');
 
   const d1 = new Date(loanDate);
   const d2 = new Date(repayDate);
@@ -1150,7 +1150,7 @@ function calcExchange() {
   const fee = parseNum('ex-fee');
   const currency = document.getElementById('ex-currency').value;
 
-  if (foreignAmount <= 0 || appliedRate <= 0) return alert('외화 금액과 환율을 입력해주세요.');
+  if (foreignAmount <= 0 || appliedRate <= 0) return showToast('외화 금액과 환율을 입력해주세요.');
 
   const effectiveRate = appliedRate * (1 - discount / 100);
   let krwAmount = foreignAmount * effectiveRate;
@@ -1191,9 +1191,9 @@ function calcMortgage() {
   const smallDeposit = parseNum('mort-small-deposit');
   const rateType = getToggle('mort-rate-type');
 
-  if (housePrice <= 0) return alert('담보주택 시세를 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return alert('대출금액과 기간을 입력해주세요.');
-  if (income <= 0) return alert('연소득을 입력해주세요.');
+  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.');
+  if (loanAmount <= 0 || months <= 0) return showToast('대출금액과 기간을 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.');
 
   // ─── LTV 한도 ───
   const ltvTable = {
@@ -1439,6 +1439,9 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
       } else {
         calcState.current += key;
       }
+    } else if (key === '00') {
+      if (calcState.resetNext) { calcState.current = '0'; calcState.resetNext = false; }
+      if (calcState.current !== '0') calcState.current += '00';
     } else if (key === '.') {
       if (calcState.resetNext) { calcState.current = '0'; calcState.resetNext = false; }
       if (!calcState.current.includes('.')) calcState.current += '.';
@@ -1495,7 +1498,7 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
 
     const keyMap = {
       '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
-      '.':'.','+':'+','-':'-','*':'×','/':'÷',
+      '.':'00','+':'+','-':'-','*':'×','/':'÷',
       'Enter':'=','=':'=',
       'Escape':'C','Delete':'CE','Backspace':'back'
     };
@@ -1505,6 +1508,15 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
       calcInput(mapped);
     }
   });
+
+  // 계산기 결과 저장
+  window.saveCalcResult = function() {
+    const val = calcState.current;
+    if (!val || val === '0') return showToast('저장할 계산 결과가 없습니다.');
+    const display = Number(val).toLocaleString('ko-KR');
+    addRecentCalc('calc', display);
+    showToast('계산 결과가 저장되었습니다.');
+  };
 
   // ══════════════════════════════════════════════════════
   // TODO LIST

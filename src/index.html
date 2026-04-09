@@ -307,8 +307,8 @@
           <div class="field">
             <label class="field__label">차액납부</label>
             <div class="toggle-group" data-field="loan-round-method">
-              <button class="toggle-btn" tabindex="-1" data-value="first">최초회차</button>
-              <button class="toggle-btn active" tabindex="-1" data-value="last">최종회차</button>
+              <button class="toggle-btn active" tabindex="-1" data-value="first">최초회차</button>
+              <button class="toggle-btn" tabindex="-1" data-value="last">최종회차</button>
             </div>
           </div>
         </div>
@@ -846,8 +846,11 @@
           <button class="calc-btn calc-btn--op" data-calc="+">+</button>
           <button class="calc-btn" data-calc="±">±</button>
           <button class="calc-btn" data-calc="0">0</button>
-          <button class="calc-btn" data-calc=".">.</button>
+          <button class="calc-btn" data-calc="00">00</button>
           <button class="calc-btn calc-btn--equal" data-calc="=">=</button>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--primary" onclick="saveCalcResult()">이 계산내역 저장하기</button>
         </div>
       </div>
     </div>
