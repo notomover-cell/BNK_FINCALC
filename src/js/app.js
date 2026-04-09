@@ -609,9 +609,8 @@ function openSettings() {
       el.value = val;
     }
   });
-  // 커스텀 폰트 설정값 로드
-  const fontSelect = document.getElementById('set-custom-font');
-  if (fontSelect) fontSelect.value = localStorage.getItem('customFont') || '';
+  // 시스템 폰트 목록 로드 및 커스텀 폰트 설정값 복원
+  loadSystemFonts();
 
   document.getElementById('settingsOverlay').classList.add('open');
   checkStartupStatus();
@@ -651,6 +650,51 @@ function applyCustomFont() {
   } else {
     document.documentElement.style.setProperty('--font', fallback);
   }
+}
+
+async function loadSystemFonts() {
+  const select = document.getElementById('set-custom-font');
+  if (!select) return;
+  const saved = localStorage.getItem('customFont') || '';
+
+  // 기본 옵션만 남기기
+  select.innerHTML = '<option value="">기본 (나눔스퀘어→시스템 폰트)</option>';
+
+  if (window.queryLocalFonts) {
+    try {
+      const fonts = await window.queryLocalFonts();
+      const families = [...new Set(fonts.map(f => f.family))].sort((a, b) => a.localeCompare(b, 'ko'));
+      families.forEach(family => {
+        const opt = document.createElement('option');
+        opt.value = family;
+        opt.textContent = family;
+        if (family === saved) opt.selected = true;
+        select.appendChild(opt);
+      });
+    } catch {
+      // 권한 거부 시 기본 목록으로 폴백
+      addFallbackFonts(select, saved);
+    }
+  } else {
+    // API 미지원 시 기본 목록
+    addFallbackFonts(select, saved);
+  }
+
+  if (saved && !select.value) select.value = saved;
+}
+
+function addFallbackFonts(select, saved) {
+  const list = [
+    'NanumSquare', 'NanumSquareRound', 'NanumGothic', 'NanumMyeongjo',
+    'Malgun Gothic', 'Pretendard', 'Gulim', 'Dotum', 'D2Coding'
+  ];
+  list.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === saved) opt.selected = true;
+    select.appendChild(opt);
+  });
 }
 
 function closeSettings() {
