@@ -102,6 +102,12 @@ function restoreFormSnapshot(tabId, snap) {
       if (inp) inp.value = val;
     }
   });
+  // 조건부 필드 visibility 갱신
+  if (tabId === 'loan') {
+    const method = getToggle('loan-repay-type');
+    const splitOpts = document.getElementById('loan-split-opts');
+    if (splitOpts) splitOpts.style.display = method === 'principal' ? '' : 'none';
+  }
 }
 
 function setFormDisabled(tabId, disabled) {
