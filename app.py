@@ -172,8 +172,9 @@ def main():
         f'--user-data-dir={user_data}',
     ])
 
-    # Edge 프로세스 종료 대기
+    # Edge 프로세스 종료 대기 후 강제 정리
     proc.wait()
+    os._exit(0)
 
 
 if __name__ == '__main__':
