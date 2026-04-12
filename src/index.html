@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=440">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BNK 금융계산기</title>
   <!-- CDN 폰트 제거: 내부망에서 렌더링 차단 원인 → 시스템 폰트 사용 -->
   <link rel="icon" href="img/favicon.ico" type="image/x-icon">
@@ -19,7 +19,7 @@
       <span>금융계산기</span>
     </div>
     <div class="title-bar__actions">
-      <button class="title-bar__btn title-bar__btn--settings" id="btnSettings" title="정책변수 설정">⚙ 정책변수</button>
+      <button class="title-bar__btn title-bar__btn--settings" id="btnSettings" title="설정">⚙ 설정</button>
       <button class="title-bar__btn title-bar__btn--theme" id="btnThemeToggle" title="다크모드 전환">☀</button>
     </div>
   </div>
@@ -44,8 +44,18 @@
     </div>
     <!-- Mega Menu (hover/click dropdown) -->
     <div class="mega-menu" id="megaMenu">
-      <div class="mega-menu__section-title">전체 계산기</div>
-      <div class="mega-menu__grid" id="megaAllGrid"></div>
+      <div class="mega-menu__section">
+        <div class="mega-menu__section-title">기본</div>
+        <div class="mega-menu__grid" id="megaGridBasic"></div>
+      </div>
+      <div class="mega-menu__section">
+        <div class="mega-menu__section-title">수신</div>
+        <div class="mega-menu__grid" id="megaGridDeposit"></div>
+      </div>
+      <div class="mega-menu__section">
+        <div class="mega-menu__section-title">대출</div>
+        <div class="mega-menu__grid" id="megaGridLoan"></div>
+      </div>
     </div>
   </div>
 
@@ -307,8 +317,8 @@
           <div class="field">
             <label class="field__label">차액납부</label>
             <div class="toggle-group" data-field="loan-round-method">
-              <button class="toggle-btn" tabindex="-1" data-value="first">최초회차</button>
-              <button class="toggle-btn active" tabindex="-1" data-value="last">최종회차</button>
+              <button class="toggle-btn active" tabindex="-1" data-value="first">최초회차</button>
+              <button class="toggle-btn" tabindex="-1" data-value="last">최종회차</button>
             </div>
           </div>
         </div>
@@ -846,8 +856,11 @@
           <button class="calc-btn calc-btn--op" data-calc="+">+</button>
           <button class="calc-btn" data-calc="±">±</button>
           <button class="calc-btn" data-calc="0">0</button>
-          <button class="calc-btn" data-calc=".">.</button>
+          <button class="calc-btn" data-calc="00">00</button>
           <button class="calc-btn calc-btn--equal" data-calc="=">=</button>
+        </div>
+        <div class="action-row">
+          <button class="btn btn--primary" onclick="saveCalcResult()">이 계산내역 저장하기</button>
         </div>
       </div>
     </div>
@@ -894,10 +907,28 @@
 <div class="settings-overlay" id="settingsOverlay">
   <div class="settings-panel">
     <div class="settings-panel__header">
-      <span>정책변수 설정</span>
+      <span>설정</span>
       <button class="settings-panel__close" id="settingsClose">&times;</button>
     </div>
     <div class="settings-panel__body">
+
+      <!-- 앱 설정 (상단) -->
+      <div class="settings-section">
+        <div class="settings-section__title">앱 설정</div>
+        <div class="settings-field settings-field--row">
+          <label class="settings-field__label">Windows 시작 시 자동 실행</label>
+          <button class="btn btn--sm" id="startupToggle" onclick="toggleStartup()">확인 중...</button>
+        </div>
+        <div class="settings-field">
+          <label class="settings-field__label">표시 폰트</label>
+          <div class="input-wrap">
+            <select id="set-custom-font">
+              <option value="">기본 (나눔스퀘어→시스템 폰트)</option>
+            </select>
+          </div>
+          <div class="settings-field__hint">시스템에 설치된 폰트 목록에서 선택하세요</div>
+        </div>
+      </div>
 
       <div class="settings-notice">
         &#9888; 아래 변수는 금융 정책에 따라 변경될 수 있습니다.<br>
@@ -990,14 +1021,9 @@
         </div>
       </div>
 
-      <!-- 앱 설정 -->
-      <div class="settings-section">
-        <div class="settings-section__title">앱 설정</div>
-      </div>
-
       <div class="settings-credit">
-        <div class="settings-credit__version">v1.0.0 · 최종 업데이트: 2026-04-05</div>
-        <div class="settings-credit__author">Made by 디지털전략부</div>
+        <div class="settings-credit__version">v1.1.0 · 최종 업데이트: 2026-04-09</div>
+        <div class="settings-credit__author">Made by 손우창, 안종환</div>
       </div>
 
     </div>

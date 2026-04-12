@@ -372,17 +372,17 @@ function showToast(msg) {
 // TAB DATA
 // ══════════════════════════════════════════════════════
 const TAB_META = {
-  deposit:  { label: '예금',      icon: '💰' },
-  savings:  { label: '적금',      icon: '🏦' },
-  loan:     { label: '대출',      icon: '💳' },
-  mortgage: { label: '주담대종합', icon: '🏠' },
-  ltv:      { label: 'LTV',       icon: '📊' },
-  dti:      { label: 'DTI',       icon: '📈' },
-  dsr:      { label: 'DSR',       icon: '📉' },
-  prepay:   { label: '중도상환',   icon: '🔄' },
-  calc:     { label: '계산기',    icon: '🔢' },
-  todo:     { label: '할일',     icon: '✅' },
-  history:  { label: '이력',      icon: '📋' }
+  calc:     { label: '계산기',    icon: '🔢', category: 'basic' },
+  todo:     { label: '할일',     icon: '✅', category: 'basic' },
+  history:  { label: '이력',      icon: '📋', category: 'basic' },
+  deposit:  { label: '예금',      icon: '💰', category: 'deposit' },
+  savings:  { label: '적금',      icon: '🏦', category: 'deposit' },
+  loan:     { label: '대출',      icon: '💳', category: 'loan' },
+  mortgage: { label: '주담대종합', icon: '🏠', category: 'loan' },
+  ltv:      { label: 'LTV',       icon: '📊', category: 'loan' },
+  dti:      { label: 'DTI',       icon: '📈', category: 'loan' },
+  dsr:      { label: 'DSR',       icon: '📉', category: 'loan' },
+  prepay:   { label: '중도상환',   icon: '🔄', category: 'loan' },
 };
 
 const TAB_ORDER = Object.keys(TAB_META);
@@ -439,16 +439,23 @@ function getHiddenTabs() {
 }
 
 function renderMegaMenu() {
-  const activeTab = document.querySelector('.tab-nav__item.active')?.dataset.tab;
-  const allGrid = document.getElementById('megaAllGrid');
+  const activeTab = document.querySelector('.tab-nav__item.active')?.dataset.tab
+    || document.querySelector('.tab-nav__fixed-item.active')?.dataset.tab;
+  const categories = {
+    basic:   document.getElementById('megaGridBasic'),
+    deposit: document.getElementById('megaGridDeposit'),
+    loan:    document.getElementById('megaGridLoan'),
+  };
+  Object.values(categories).forEach(el => el.innerHTML = '');
 
-  allGrid.innerHTML = TAB_ORDER.map(tab => {
+  TAB_ORDER.forEach(tab => {
     const meta = TAB_META[tab];
     const isFav = favorites.includes(tab);
-    return `<button class="mega-menu__item ${tab === activeTab ? 'active' : ''}" data-mega-tab="${tab}">
+    const html = `<button class="mega-menu__item ${tab === activeTab ? 'active' : ''}" data-mega-tab="${tab}">
       ${meta.label}<span class="fav-star ${isFav ? 'is-fav' : ''}" data-fav-tab="${tab}" title="즐겨찾기">${isFav ? '★' : '☆'}</span>
     </button>`;
-  }).join('');
+    categories[meta.category].insertAdjacentHTML('beforeend', html);
+  });
 }
 
 function openMegaMenu() {
@@ -602,7 +609,92 @@ function openSettings() {
       el.value = val;
     }
   });
+  // 시스템 폰트 목록 로드 및 커스텀 폰트 설정값 복원
+  loadSystemFonts();
+
   document.getElementById('settingsOverlay').classList.add('open');
+  checkStartupStatus();
+}
+
+// 시작프로그램 등록 상태 확인
+function checkStartupStatus() {
+  const btn = document.getElementById('startupToggle');
+  if (!btn) return;
+  fetch('/api/startup').then(r => r.json()).then(data => {
+    btn.textContent = data.registered ? '해제하기' : '등록하기';
+    btn.classList.toggle('btn--danger', data.registered);
+  }).catch(() => {
+    btn.textContent = '사용 불가';
+    btn.disabled = true;
+  });
+}
+
+// 시작프로그램 등록/해제 토글
+function toggleStartup() {
+  const btn = document.getElementById('startupToggle');
+  if (!btn) return;
+  const isRegistered = btn.textContent === '해제하기';
+  const url = isRegistered ? '/api/startup/unregister' : '/api/startup/register';
+  fetch(url, { method: 'POST' }).then(r => r.json()).then(data => {
+    btn.textContent = data.registered ? '해제하기' : '등록하기';
+    btn.classList.toggle('btn--danger', data.registered);
+    showToast(data.registered ? '시작프로그램에 등록되었습니다.' : '시작프로그램에서 해제되었습니다.');
+  }).catch(() => showToast('시작프로그램 설정에 실패했습니다.'));
+}
+
+function applyCustomFont() {
+  const customFont = localStorage.getItem('customFont');
+  const fallback = "'Pretendard', 'Malgun Gothic', '맑은 고딕', 'NanumGothic', '나눔고딕', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  if (customFont) {
+    document.documentElement.style.setProperty('--font', `'${customFont}', ${fallback}`);
+  } else {
+    document.documentElement.style.setProperty('--font', fallback);
+  }
+}
+
+async function loadSystemFonts() {
+  const select = document.getElementById('set-custom-font');
+  if (!select) return;
+  const saved = localStorage.getItem('customFont') || '';
+
+  // 기본 옵션만 남기기
+  select.innerHTML = '<option value="">기본 (나눔스퀘어→시스템 폰트)</option>';
+
+  if (window.queryLocalFonts) {
+    try {
+      const fonts = await window.queryLocalFonts();
+      const families = [...new Set(fonts.map(f => f.family))].sort((a, b) => a.localeCompare(b, 'ko'));
+      families.forEach(family => {
+        const opt = document.createElement('option');
+        opt.value = family;
+        opt.textContent = family;
+        if (family === saved) opt.selected = true;
+        select.appendChild(opt);
+      });
+    } catch {
+      // 권한 거부 시 기본 목록으로 폴백
+      addFallbackFonts(select, saved);
+    }
+  } else {
+    // API 미지원 시 기본 목록
+    addFallbackFonts(select, saved);
+  }
+
+  if (saved && !select.value) select.value = saved;
+}
+
+function addFallbackFonts(select, saved) {
+  const list = [
+    'NanumSquare', 'NanumSquareRound', 'NanumGothic', 'NanumMyeongjo',
+    'Malgun Gothic', 'Pretendard', 'Gulim', 'Dotum', 'D2Coding'
+  ];
+  list.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === saved) opt.selected = true;
+    select.appendChild(opt);
+  });
 }
 
 function closeSettings() {
@@ -616,6 +708,15 @@ function saveSettings() {
     if (!isNaN(val)) policyVars[key] = val;
   });
   savePolicy();
+
+  // 커스텀 폰트 저장 및 적용
+  const customFont = document.getElementById('set-custom-font')?.value;
+  if (customFont) {
+    localStorage.setItem('customFont', customFont);
+  } else {
+    localStorage.removeItem('customFont');
+  }
+  applyCustomFont();
 
   // Sync inline policy fields
   syncPolicyToForms();
@@ -780,7 +881,7 @@ function calcDeposit() {
   const interestType = getToggle('dep-interest-type');
   const taxRate = getTaxRate('dep-tax-type');
 
-  if (principal <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
+  if (principal <= 0 || months <= 0) return showToast('금액과 기간을 입력해주세요.');
 
   let interest;
   if (interestType === 'simple') {
@@ -809,7 +910,7 @@ function calcSavings() {
   const interestType = getToggle('sav-interest-type');
   const taxRate = getTaxRate('sav-tax-type');
 
-  if (monthly <= 0 || months <= 0) return alert('금액과 기간을 입력해주세요.');
+  if (monthly <= 0 || months <= 0) return showToast('금액과 기간을 입력해주세요.');
 
   const totalPaid = monthly * months;
   let interest;
@@ -847,8 +948,8 @@ function calcLoan() {
     roundMethod = getToggle('loan-round-method') || 'last';
   }
 
-  if (principal <= 0 || totalMonths <= 0) return alert('금액과 기간을 입력해주세요.');
-  if (gracePeriod >= totalMonths && method !== 'bullet') return alert('거치기간이 대출기간보다 길 수 없습니다.');
+  if (principal <= 0 || totalMonths <= 0) return showToast('금액과 기간을 입력해주세요.');
+  if (gracePeriod >= totalMonths && method !== 'bullet') return showToast('거치기간이 대출기간보다 길 수 없습니다.');
 
   const result = calcMonthlyPayment(principal, rate, totalMonths, method, roundUnit, roundMethod, gracePeriod);
 
@@ -973,7 +1074,7 @@ function calcLTV() {
   const existingLoan = parseNum('ltv-existing-loan');
   const smallDeposit = parseNum('ltv-small-deposit');
 
-  if (housePrice <= 0) return alert('담보주택 시세를 입력해주세요.');
+  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.');
 
   const ltvTable = {
     purchase: {
@@ -1027,8 +1128,8 @@ function calcDTI() {
   const existMortgage = parseNum('dti-exist-mortgage');
   const otherInterest = parseNum('dti-other-interest');
 
-  if (income <= 0) return alert('연소득을 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return alert('대출 정보를 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.');
+  if (loanAmount <= 0 || months <= 0) return showToast('대출 정보를 입력해주세요.');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
   const dti = (newAnnualRepay + existMortgage + otherInterest) / income * 100;
@@ -1058,8 +1159,8 @@ function calcDSR() {
   const region = getToggle('dsr-region');
   const rateType = getToggle('dsr-rate-type');
 
-  if (income <= 0) return alert('연소득을 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return alert('대출 정보를 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.');
+  if (loanAmount <= 0 || months <= 0) return showToast('대출 정보를 입력해주세요.');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
   const dsr = (newAnnualRepay + existRepay) / income * 100;
@@ -1109,8 +1210,8 @@ function calcPrepay() {
   const repayDate = document.getElementById('pre-repay-date').value;
   const feePeriodYears = parseNum('pre-fee-period');
 
-  if (amount <= 0) return alert('상환금액을 입력해주세요.');
-  if (!loanDate || !repayDate) return alert('대출일자와 상환일자를 입력해주세요.');
+  if (amount <= 0) return showToast('상환금액을 입력해주세요.');
+  if (!loanDate || !repayDate) return showToast('대출일자와 상환일자를 입력해주세요.');
 
   const d1 = new Date(loanDate);
   const d2 = new Date(repayDate);
@@ -1150,7 +1251,7 @@ function calcExchange() {
   const fee = parseNum('ex-fee');
   const currency = document.getElementById('ex-currency').value;
 
-  if (foreignAmount <= 0 || appliedRate <= 0) return alert('외화 금액과 환율을 입력해주세요.');
+  if (foreignAmount <= 0 || appliedRate <= 0) return showToast('외화 금액과 환율을 입력해주세요.');
 
   const effectiveRate = appliedRate * (1 - discount / 100);
   let krwAmount = foreignAmount * effectiveRate;
@@ -1191,9 +1292,9 @@ function calcMortgage() {
   const smallDeposit = parseNum('mort-small-deposit');
   const rateType = getToggle('mort-rate-type');
 
-  if (housePrice <= 0) return alert('담보주택 시세를 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return alert('대출금액과 기간을 입력해주세요.');
-  if (income <= 0) return alert('연소득을 입력해주세요.');
+  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.');
+  if (loanAmount <= 0 || months <= 0) return showToast('대출금액과 기간을 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.');
 
   // ─── LTV 한도 ───
   const ltvTable = {
@@ -1349,7 +1450,7 @@ function fmtShort(n) {
 // EASTER EGG — 로고 더블클릭
 // ══════════════════════════════════════════════════════
 document.getElementById('titleLogo').addEventListener('dblclick', () => {
-  showToast('v1.0.0 · Made by 디지털전략부 · 2026-04-05');
+  showToast('v1.1.0 · Made by 손우창, 안종환 · 2026-04-09');
 });
 
 // ══════════════════════════════════════════════════════
@@ -1359,6 +1460,7 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
   loadPolicy();
   loadFavorites();
   loadTheme();
+  applyCustomFont();
   syncPolicyToForms();
   reorderTabs();
   renderMegaMenu();
@@ -1439,6 +1541,9 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
       } else {
         calcState.current += key;
       }
+    } else if (key === '00') {
+      if (calcState.resetNext) { calcState.current = '0'; calcState.resetNext = false; }
+      if (calcState.current !== '0') calcState.current += '00';
     } else if (key === '.') {
       if (calcState.resetNext) { calcState.current = '0'; calcState.resetNext = false; }
       if (!calcState.current.includes('.')) calcState.current += '.';
@@ -1495,7 +1600,7 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
 
     const keyMap = {
       '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
-      '.':'.','+':'+','-':'-','*':'×','/':'÷',
+      '.':'00','+':'+','-':'-','*':'×','/':'÷',
       'Enter':'=','=':'=',
       'Escape':'C','Delete':'CE','Backspace':'back'
     };
@@ -1505,6 +1610,15 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
       calcInput(mapped);
     }
   });
+
+  // 계산기 결과 저장
+  window.saveCalcResult = function() {
+    const val = calcState.current;
+    if (!val || val === '0') return showToast('저장할 계산 결과가 없습니다.');
+    const display = Number(val).toLocaleString('ko-KR');
+    addRecentCalc('calc', display);
+    showToast('계산 결과가 저장되었습니다.');
+  };
 
   // ══════════════════════════════════════════════════════
   // TODO LIST
