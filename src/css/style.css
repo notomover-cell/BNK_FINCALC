@@ -1,51 +1,51 @@
-/* ===== BNK 금융계산기 — 디자인 토큰 ===== */
+/* ===== BNK 금융계산기 — Apple-Inspired 디자인 토큰 ===== */
 :root, [data-theme="light"] {
   --bg:          #FFFFFF;
-  --bg-subtle:   #F2F4F6;
-  --primary:     #3182F6;
-  --primary-hover:#1B64DA;
-  --primary-alpha:rgba(49,130,246,0.08);
-  --primary-light:#EBF3FE;
-  --secondary:   #191F28;
-  --subtle:      #4E5968;
-  --text:        #191F28;
-  --text-sub:    #8B95A1;
-  --border:      #E5E8EB;
-  --divider:     #F2F4F6;
-  --red:         #F04452;
-  --orange:      #F59E0B;
-  --green:       #30A952;
-  --info:        #3182F6;
+  --bg-subtle:   #F5F5F7;
+  --primary:     #0071E3;
+  --primary-hover:#0077ED;
+  --primary-alpha:rgba(0,113,227,0.08);
+  --primary-light:#E8F1FC;
+  --secondary:   #1D1D1F;
+  --subtle:      #6E6E73;
+  --text:        #1D1D1F;
+  --text-sub:    #86868B;
+  --border:      #D2D2D7;
+  --divider:     #F5F5F7;
+  --red:         #FF3B30;
+  --orange:      #FF9500;
+  --green:       #34C759;
+  --info:        #0071E3;
 
-  --title-bg:    #191F28;
-  --title-text:  #FFFFFF;
+  --title-bg:    #000000;
+  --title-text:  #F5F5F7;
 
   --app-width: 440px;
-  --radius: 6px;
-  --radius-lg: 10px;
-  --font: 'Pretendard', 'Malgun Gothic', '맑은 고딕', 'NanumGothic', '나눔고딕', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Pretendard', 'Malgun Gothic', '맑은 고딕', 'Helvetica Neue', sans-serif;
 }
 
 /* ── Dark Theme ── */
 [data-theme="dark"] {
-  --bg:          #17171C;
-  --bg-subtle:   #212126;
-  --primary:     #5CA0FA;
-  --primary-hover:#7AB5FB;
-  --primary-alpha:rgba(92,160,250,0.14);
-  --primary-light:#1C2638;
-  --secondary:   #3A3D46;
-  --subtle:      #A0A8B4;
+  --bg:          #1C1C1E;
+  --bg-subtle:   #2C2C2E;
+  --primary:     #0A84FF;
+  --primary-hover:#409CFF;
+  --primary-alpha:rgba(10,132,255,0.15);
+  --primary-light:#1C2A3E;
+  --secondary:   #F5F5F7;
+  --subtle:      #98989D;
   --text:        #F5F5F7;
-  --text-sub:    #9A9FAB;
-  --border:      #3D3E44;
-  --divider:     #2C2D32;
-  --red:         #FF7B7B;
-  --orange:      #FFC65C;
-  --green:       #5DE076;
-  --info:        #5CA0FA;
+  --text-sub:    #98989D;
+  --border:      #38383A;
+  --divider:     #2C2C2E;
+  --red:         #FF453A;
+  --orange:      #FF9F0A;
+  --green:       #30D158;
+  --info:        #0A84FF;
 
-  --title-bg:    #111113;
+  --title-bg:    #000000;
   --title-text:  #F5F5F7;
 }
 
@@ -55,10 +55,12 @@
 body {
   font-family: var(--font);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.47;
+  letter-spacing: -0.224px;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   user-select: none;
 }
@@ -129,6 +131,9 @@ html {
 }
 .title-bar__btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
 .title-bar__btn--active { color: #fff; background: rgba(255,255,255,0.18); }
+.title-bar__btn--theme { font-size: 17px; }
+.title-bar__btn--theme-sun { color: #FFD60A; text-shadow: 0 0 6px rgba(255,214,10,0.5); }
+.title-bar__btn--theme-moon { color: #BFC1FF; text-shadow: 0 0 6px rgba(191,193,255,0.4); }
 .title-bar__btn--settings {
   width: auto;
   padding: 0 8px;
@@ -156,6 +161,8 @@ html {
   -webkit-mask-image: linear-gradient(to right, #000 85%, transparent 100%);
 }
 .tab-nav::-webkit-scrollbar { display: none; }
+.tab-nav.dragging { cursor: grabbing; user-select: none; }
+.tab-nav:not(.dragging) { cursor: grab; }
 
 .tab-nav__fixed-item {
   flex-shrink: 0;
@@ -191,10 +198,10 @@ html {
   white-space: nowrap;
   display: flex; align-items: center; gap: 3px;
 }
-.tab-nav__item:hover { color: var(--secondary); }
+.tab-nav__item:hover { color: var(--primary); }
 .tab-nav__item.active {
-  color: var(--secondary);
-  font-weight: 700;
+  color: var(--primary);
+  font-weight: 600;
   border-bottom-color: var(--primary);
 }
 .tab-nav__item.is-fav::before {
@@ -282,10 +289,10 @@ html {
   background: var(--bg);
 }
 .mega-menu__item.active {
-  background: var(--secondary);
+  background: var(--primary);
   color: #fff;
-  border-color: var(--secondary);
-  font-weight: 700;
+  border-color: var(--primary);
+  font-weight: 600;
 }
 .mega-menu__item .fav-star {
   font-size: 11px;
@@ -372,10 +379,11 @@ html {
 /* ===== Card ===== */
 .card {
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 18px;
   margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
 }
 
 .card__title {
@@ -410,7 +418,7 @@ html {
 }
 .input-wrap:focus-within {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-alpha);
+  box-shadow: 0 0 0 3px var(--primary-alpha);
 }
 .input-wrap input {
   flex: 1; min-width: 0;
@@ -469,7 +477,8 @@ html {
   white-space: nowrap; text-align: center;
 }
 .toggle-btn + .toggle-btn { border-left: 1px solid var(--border); }
-.toggle-btn.active { background: var(--secondary); color: #fff; font-weight: 600; }
+.toggle-btn.active { background: #1D1D1F; color: #fff; font-weight: 600; }
+[data-theme="dark"] .toggle-btn.active { background: #F5F5F7; color: #1D1D1F; }
 .toggle-btn:not(.active):hover { background: var(--primary-alpha); }
 
 .input-with-toggle { display: flex; gap: 6px; }
@@ -478,11 +487,12 @@ html {
 .input-with-toggle .toggle-btn { padding: 6px 12px; }
 
 /* ===== Action Buttons ===== */
-.action-row { display: flex; gap: 8px; margin-top: 6px; }
+.action-row { display: flex; gap: 8px; margin-top: 18px; }
 .btn {
-  padding: 12px 16px; font-size: 14px; font-weight: 600;
-  border-radius: var(--radius); border: none;
-  cursor: pointer; transition: all 0.15s;
+  padding: 12px 16px; font-size: 15px; font-weight: 500;
+  border-radius: var(--radius-lg); border: none;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: -0.2px;
 }
 .btn:active { transform: scale(0.97); }
 .btn--reset {
@@ -496,15 +506,17 @@ html {
 /* ===== Result Card ===== */
 .result-card {
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
 }
 .result-card__header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px;
-  background: var(--secondary); color: #fff;
-  font-size: 13.5px; font-weight: 700; cursor: pointer;
+  background: #000000; color: #fff;
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  letter-spacing: -0.2px;
 }
 .result-card__toggle { font-size: 11px; opacity: 0.7; transition: transform 0.2s; }
 .result-card__toggle.collapsed { transform: rotate(180deg); }
@@ -523,12 +535,13 @@ html {
 
 .result-highlight {
   background: var(--bg-subtle); border-radius: var(--radius);
-  padding: 12px; margin-top: 8px; text-align: center;
+  padding: 14px; margin-top: 8px; text-align: center;
 }
-.result-highlight__label { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; }
+.result-highlight__label { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; letter-spacing: -0.1px; }
 .result-highlight__value {
-  font-size: 23px; font-weight: 800;
-  color: var(--secondary); font-variant-numeric: tabular-nums;
+  font-size: 24px; font-weight: 700;
+  color: var(--text); font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
 }
 .result-highlight__value span { font-size: 14px; font-weight: 600; }
 
@@ -567,6 +580,23 @@ html {
 
 /* ===== Disclaimer ===== */
 .disclaimer { font-size: 11.5px; color: #9BA3AE; line-height: 1.6; padding: 8px 0 0; }
+
+/* ===== RTI 인라인 필드 ===== */
+.field-inline { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.field-inline label { min-width: 48px; font-size: 12px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
+.field-inline .input-wrap { flex: 1; }
+.btn-add-row {
+  float: right; padding: 2px 10px; font-size: 11px; font-weight: 600;
+  color: var(--primary); background: transparent;
+  border: 1px solid var(--primary); border-radius: 4px; cursor: pointer;
+}
+.btn-add-row:hover { background: var(--primary); color: #fff; }
+.btn-remove-row {
+  padding: 2px 8px; font-size: 14px; font-weight: 700;
+  color: var(--red, #E5534B); background: transparent; border: none; cursor: pointer; flex-shrink: 0;
+}
+.btn-remove-row:hover { color: #fff; background: var(--red, #E5534B); border-radius: 4px; }
+.rti-loan-row, .rti-floor-row { margin-bottom: 2px; }
 
 /* ===== Policy Badge ===== */
 .badge-policy {
