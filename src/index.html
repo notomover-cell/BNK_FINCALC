@@ -35,6 +35,7 @@
         <button class="tab-nav__item" data-tab="ltv">LTV</button>
         <button class="tab-nav__item" data-tab="dti">DTI</button>
         <button class="tab-nav__item" data-tab="dsr">DSR</button>
+        <button class="tab-nav__item" data-tab="rti">RTI</button>
         <button class="tab-nav__item" data-tab="prepay">중도상환</button>
         <button class="tab-nav__item" data-tab="calc">계산기</button>
         <button class="tab-nav__item" data-tab="todo">할일</button>
@@ -763,6 +764,95 @@
       </div>
     </div>
 
+    <!-- ========== RTI ========== -->
+    <div class="tab-panel" id="panel-rti">
+      <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-rti" placeholder="메모 (선택)" rows="1"></textarea></div>
+      <div class="card">
+        <div class="section-header">임대업 구분</div>
+        <div class="field">
+          <label class="field__label">임대업 유형</label>
+          <div class="toggle-group" data-field="rti-type">
+            <button class="toggle-btn" data-value="housing">주택임대업<br><small>기준 1.25배</small></button>
+            <button class="toggle-btn active" data-value="non-housing">비주택임대업<br><small>기준 1.50배</small></button>
+          </div>
+        </div>
+
+        <div class="section-header">면적 정보</div>
+        <div class="field">
+          <label class="field__label">총 면적</label>
+          <div class="input-wrap">
+            <input type="text" id="rti-total-area" placeholder="0" inputmode="decimal">
+            <span class="input-wrap__suffix">㎡</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">임대면적</label>
+          <div class="input-wrap">
+            <input type="text" id="rti-rent-area" placeholder="0" inputmode="decimal">
+            <span class="input-wrap__suffix">㎡</span>
+          </div>
+        </div>
+
+        <div class="section-header">금리 정보</div>
+        <div class="field">
+          <label class="field__label">한국은행 고시금리 (정기예금) <span class="badge-policy">정책변수</span></label>
+          <div class="input-wrap">
+            <input type="text" id="rti-base-rate" placeholder="3.83" value="3.83" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">스트레스 금리</label>
+          <div class="input-wrap">
+            <input type="text" id="rti-stress-rate" placeholder="1.00" value="1.00" inputmode="decimal">
+            <span class="input-wrap__suffix">%</span>
+          </div>
+        </div>
+
+        <div class="section-header">대출 정보 <button class="btn-add-row" id="rtiAddLoan" title="대출 추가">+ 추가</button></div>
+        <div id="rti-loans">
+          <div class="rti-loan-row" data-idx="0">
+            <div class="field-inline">
+              <label>대출 1</label>
+              <div class="input-wrap"><input type="text" class="rti-loan-amt" placeholder="금액" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+              <div class="input-wrap" style="max-width:100px"><input type="text" class="rti-loan-rate" placeholder="금리" inputmode="decimal"><span class="input-wrap__suffix">%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header">층별 임대 정보 <button class="btn-add-row" id="rtiAddFloor" title="층 추가">+ 추가</button></div>
+        <div id="rti-floors">
+          <div class="rti-floor-row" data-idx="0">
+            <div class="field-inline">
+              <div class="input-wrap" style="max-width:80px"><input type="text" class="rti-floor-name" placeholder="층" value="1층"></div>
+              <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+              <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label class="field__label">추정임대 적용</label>
+          <div class="toggle-group" data-field="rti-estimate">
+            <button class="toggle-btn active" data-value="actual">실제임대 (100%)</button>
+            <button class="toggle-btn" data-value="estimate">추정임대 (70%)</button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn--primary" onclick="calcRTI()">계산하기</button>
+          <button class="quick-btn quick-btn--reset" onclick="resetRTI()">초기화</button>
+        </div>
+      </div>
+      <div class="result-card" id="rti-result" style="display:none">
+        <div class="result-card__header" onclick="toggleResult('rti-result')">
+          계산 결과
+          <span class="result-card__toggle">&#9650;</span>
+        </div>
+        <div class="result-card__body" id="rti-result-body"></div>
+      </div>
+    </div>
+
     <!-- ========== 중도상환 ========== -->
     <div class="tab-panel" id="panel-prepay">
       <div class="memo-wrap"><button class="memo-wrap__clear" title="메모 지우기" onclick="this.parentElement.querySelector('textarea').value=''">×</button><textarea id="memo-prepay" placeholder="메모 (선택)" rows="1"></textarea></div>
@@ -975,6 +1065,16 @@
           <label class="settings-field__label">기타</label>
           <div class="input-wrap"><input type="text" id="set-small-other" value="2,000" data-policy="small-other"></div>
         </div>
+      </div>
+
+      <!-- 한국은행 고시금리 -->
+      <div class="settings-section">
+        <div class="settings-section__title">한국은행 고시금리</div>
+        <div class="settings-field">
+          <label class="settings-field__label">정기예금 가중평균금리 (%)</label>
+          <div class="input-wrap"><input type="text" id="set-bok-deposit-rate" value="3.83" data-policy="bok-deposit-rate"></div>
+        </div>
+        <div class="settings-field__hint">RTI 간주임대료 산정 기준 (한국은행 공시)</div>
       </div>
 
       <!-- 스트레스 DSR -->

@@ -6,6 +6,7 @@
 const POLICY_DEFAULTS = {
   'ltv-first': 70, 'ltv-low': 60, 'ltv-none': 40, 'ltv-one': 50,
   'small-seoul': 5500, 'small-capital': 4800, 'small-metro': 2800, 'small-other': 2000,
+  'bok-deposit-rate': 3.83,
   'stress-capital': 3.0, 'stress-local': 0.75, 'stress-other': 1.5,
   'prepay-rate': 0.58, 'prepay-period': 3,
   'dsr-limit1': 40, 'dsr-limit2': 50
@@ -311,7 +312,11 @@ function applyTheme(theme) {
 
   // Update sun/moon icon
   const themeBtn = document.getElementById('btnThemeToggle');
-  if (themeBtn) themeBtn.textContent = theme === 'dark' ? '☀' : '☾';
+  if (themeBtn) {
+    themeBtn.textContent = theme === 'dark' ? '☀' : '☾';
+    themeBtn.classList.remove('title-bar__btn--theme-sun', 'title-bar__btn--theme-moon');
+    themeBtn.classList.add(theme === 'dark' ? 'title-bar__btn--theme-sun' : 'title-bar__btn--theme-moon');
+  }
 }
 
 // Theme toggle button (sun/moon)
@@ -361,11 +366,15 @@ function getTaxRate(field) {
   }
 }
 
-function showToast(msg) {
+function showToast(msg, focusId) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2000);
+  if (focusId) {
+    const target = document.getElementById(focusId);
+    if (target) { target.focus(); target.select?.(); }
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -382,14 +391,41 @@ const TAB_META = {
   ltv:      { label: 'LTV',       icon: '📊', category: 'loan' },
   dti:      { label: 'DTI',       icon: '📈', category: 'loan' },
   dsr:      { label: 'DSR',       icon: '📉', category: 'loan' },
+  rti:      { label: 'RTI',       icon: '🏢', category: 'loan' },
   prepay:   { label: '중도상환',   icon: '🔄', category: 'loan' },
 };
 
 const TAB_ORDER = Object.keys(TAB_META);
 
 // ══════════════════════════════════════════════════════
-// TAB NAVIGATION
+// TAB NAVIGATION — drag scroll
 // ══════════════════════════════════════════════════════
+(function initTabDragScroll() {
+  const nav = document.getElementById('tabNav');
+  let isDragging = false, startX, scrollLeft;
+  nav.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    nav.classList.add('dragging');
+    startX = e.pageX - nav.offsetLeft;
+    scrollLeft = nav.scrollLeft;
+  });
+  nav.addEventListener('mouseleave', () => { isDragging = false; nav.classList.remove('dragging'); });
+  nav.addEventListener('mouseup', () => { isDragging = false; nav.classList.remove('dragging'); });
+  nav.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - nav.offsetLeft;
+    nav.scrollLeft = scrollLeft - (x - startX);
+  });
+  // 마우스 휠 → 가로 스크롤
+  nav.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      nav.scrollLeft += e.deltaY;
+    }
+  });
+})();
+
 function switchTab(tabId) {
   document.querySelectorAll('.tab-nav__item').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tabId));
@@ -881,7 +917,8 @@ function calcDeposit() {
   const interestType = getToggle('dep-interest-type');
   const taxRate = getTaxRate('dep-tax-type');
 
-  if (principal <= 0 || months <= 0) return showToast('금액과 기간을 입력해주세요.');
+  if (principal <= 0) return showToast('금액을 입력해주세요.', 'dep-amount');
+  if (months <= 0) return showToast('기간을 입력해주세요.', 'dep-period');
 
   let interest;
   if (interestType === 'simple') {
@@ -910,7 +947,8 @@ function calcSavings() {
   const interestType = getToggle('sav-interest-type');
   const taxRate = getTaxRate('sav-tax-type');
 
-  if (monthly <= 0 || months <= 0) return showToast('금액과 기간을 입력해주세요.');
+  if (monthly <= 0) return showToast('월 납입액을 입력해주세요.', 'sav-amount');
+  if (months <= 0) return showToast('적립기간을 입력해주세요.', 'sav-period');
 
   const totalPaid = monthly * months;
   let interest;
@@ -948,7 +986,8 @@ function calcLoan() {
     roundMethod = getToggle('loan-round-method') || 'last';
   }
 
-  if (principal <= 0 || totalMonths <= 0) return showToast('금액과 기간을 입력해주세요.');
+  if (principal <= 0) return showToast('대출금액을 입력해주세요.', 'loan-amount');
+  if (totalMonths <= 0) return showToast('대출기간을 입력해주세요.', 'loan-period');
   if (gracePeriod >= totalMonths && method !== 'bullet') return showToast('거치기간이 대출기간보다 길 수 없습니다.');
 
   const result = calcMonthlyPayment(principal, rate, totalMonths, method, roundUnit, roundMethod, gracePeriod);
@@ -1074,7 +1113,7 @@ function calcLTV() {
   const existingLoan = parseNum('ltv-existing-loan');
   const smallDeposit = parseNum('ltv-small-deposit');
 
-  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.');
+  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.', 'ltv-house-price');
 
   const ltvTable = {
     purchase: {
@@ -1128,8 +1167,9 @@ function calcDTI() {
   const existMortgage = parseNum('dti-exist-mortgage');
   const otherInterest = parseNum('dti-other-interest');
 
-  if (income <= 0) return showToast('연소득을 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return showToast('대출 정보를 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.', 'dti-income');
+  if (loanAmount <= 0) return showToast('대출금액을 입력해주세요.', 'dti-loan-amount');
+  if (months <= 0) return showToast('대출기간을 입력해주세요.', 'dti-period');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
   const dti = (newAnnualRepay + existMortgage + otherInterest) / income * 100;
@@ -1159,8 +1199,9 @@ function calcDSR() {
   const region = getToggle('dsr-region');
   const rateType = getToggle('dsr-rate-type');
 
-  if (income <= 0) return showToast('연소득을 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return showToast('대출 정보를 입력해주세요.');
+  if (income <= 0) return showToast('연소득을 입력해주세요.', 'dsr-income');
+  if (loanAmount <= 0) return showToast('대출금액을 입력해주세요.', 'dsr-loan-amount');
+  if (months <= 0) return showToast('대출기간을 입력해주세요.', 'dsr-period');
 
   const newAnnualRepay = calcAnnualRepay(loanAmount, rate, months, method);
   const dsr = (newAnnualRepay + existRepay) / income * 100;
@@ -1202,6 +1243,151 @@ function calcDSR() {
   addRecentCalc('dsr', 'DSR ' + dsr.toFixed(1) + '% / 스트레스 ' + stressDsr.toFixed(1) + '%');
 }
 
+// ── RTI (임대업 이자상환비율) ──────────────────────────
+
+let rtiLoanCount = 1;
+let rtiFloorCount = 1;
+
+document.getElementById('rtiAddLoan').addEventListener('click', () => {
+  if (rtiLoanCount >= 9) return;
+  rtiLoanCount++;
+  const container = document.getElementById('rti-loans');
+  const div = document.createElement('div');
+  div.className = 'rti-loan-row';
+  div.dataset.idx = rtiLoanCount - 1;
+  div.innerHTML = `<div class="field-inline">
+    <label>대출 ${rtiLoanCount}</label>
+    <div class="input-wrap"><input type="text" class="rti-loan-amt" placeholder="금액" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+    <div class="input-wrap" style="max-width:100px"><input type="text" class="rti-loan-rate" placeholder="금리" inputmode="decimal"><span class="input-wrap__suffix">%</span></div>
+    <button class="btn-remove-row" onclick="this.closest('.rti-loan-row').remove()">×</button>
+  </div>`;
+  container.appendChild(div);
+});
+
+document.getElementById('rtiAddFloor').addEventListener('click', () => {
+  rtiFloorCount++;
+  const container = document.getElementById('rti-floors');
+  const div = document.createElement('div');
+  div.className = 'rti-floor-row';
+  div.dataset.idx = rtiFloorCount - 1;
+  div.innerHTML = `<div class="field-inline">
+    <div class="input-wrap" style="max-width:80px"><input type="text" class="rti-floor-name" placeholder="층" value="${rtiFloorCount}층"></div>
+    <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+    <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+    <button class="btn-remove-row" onclick="this.closest('.rti-floor-row').remove()">×</button>
+  </div>`;
+  container.appendChild(div);
+});
+
+function resetRTI() {
+  ['rti-total-area', 'rti-rent-area'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('rti-base-rate').value = getPolicy('bok-deposit-rate');
+  document.getElementById('rti-stress-rate').value = '1.00';
+  document.querySelectorAll('#panel-rti .toggle-group').forEach(g => {
+    g.querySelectorAll('.toggle-btn').forEach(b => {
+      if (g.dataset.field === 'rti-type') b.classList.toggle('active', b.dataset.value === 'non-housing');
+      else if (g.dataset.field === 'rti-estimate') b.classList.toggle('active', b.dataset.value === 'actual');
+    });
+  });
+  document.getElementById('rti-loans').innerHTML = `<div class="rti-loan-row" data-idx="0"><div class="field-inline">
+    <label>대출 1</label>
+    <div class="input-wrap"><input type="text" class="rti-loan-amt" placeholder="금액" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+    <div class="input-wrap" style="max-width:100px"><input type="text" class="rti-loan-rate" placeholder="금리" inputmode="decimal"><span class="input-wrap__suffix">%</span></div>
+  </div></div>`;
+  document.getElementById('rti-floors').innerHTML = `<div class="rti-floor-row" data-idx="0"><div class="field-inline">
+    <div class="input-wrap" style="max-width:80px"><input type="text" class="rti-floor-name" placeholder="층" value="1층"></div>
+    <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+    <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+  </div></div>`;
+  rtiLoanCount = 1;
+  rtiFloorCount = 1;
+  document.getElementById('rti-result').style.display = 'none';
+}
+
+function parseNumFromEl(el) {
+  if (!el) return 0;
+  return parseInt(el.value.replace(/[^0-9]/g, ''), 10) || 0;
+}
+
+function calcRTI() {
+  const rtiType = getToggle('rti-type');
+  const totalArea = parseFloat(document.getElementById('rti-total-area').value) || 0;
+  const rentArea = parseFloat(document.getElementById('rti-rent-area').value) || 0;
+  const baseRate = parseFloat(document.getElementById('rti-base-rate').value) / 100 || getPolicy('bok-deposit-rate') / 100;
+  const stressRate = parseFloat(document.getElementById('rti-stress-rate').value) / 100 || 0;
+  const estimateMode = getToggle('rti-estimate');
+
+  // 대출 정보 수집
+  const loanRows = document.querySelectorAll('.rti-loan-row');
+  let totalLoan = 0, totalAnnualInterest = 0;
+  loanRows.forEach(row => {
+    const amt = parseNumFromEl(row.querySelector('.rti-loan-amt'));
+    const rate = parseFloat(row.querySelector('.rti-loan-rate')?.value) / 100 || 0;
+    if (amt > 0) {
+      totalLoan += amt;
+      totalAnnualInterest += amt * rate;
+    }
+  });
+
+  // 층별 임대 정보 수집
+  const floorRows = document.querySelectorAll('.rti-floor-row');
+  let totalDeposit = 0, totalMonthlyRent = 0;
+  floorRows.forEach(row => {
+    totalDeposit += parseNumFromEl(row.querySelector('.rti-floor-deposit'));
+    totalMonthlyRent += parseNumFromEl(row.querySelector('.rti-floor-rent'));
+  });
+
+  // 유효성 검사
+  if (totalArea <= 0) return showToast('총 면적을 입력해주세요.', 'rti-total-area');
+  if (rentArea <= 0) return showToast('임대면적을 입력해주세요.', 'rti-rent-area');
+  if (totalLoan <= 0) { showToast('대출 정보를 입력해주세요.'); document.querySelector('.rti-loan-amt')?.focus(); return; }
+  if (totalDeposit <= 0 && totalMonthlyRent <= 0) { showToast('임대 정보를 입력해주세요.'); document.querySelector('.rti-floor-deposit')?.focus(); return; }
+
+  // 계산
+  const rentRatio = Math.min(rentArea / totalArea, 1);
+  const weightedRate = totalLoan > 0 ? totalAnnualInterest / totalLoan : 0;
+
+  // 연간 임대소득 = (보증금 × 한은고시금리) + (월임대료 × 12)
+  const annualRentIncome = (totalDeposit * baseRate) + (totalMonthlyRent * 12);
+
+  // 연간 이자비용 = 총대출금 × (가중평균금리 + 스트레스금리) × 임대비중
+  const annualInterestCost = totalLoan * (weightedRate + stressRate) * rentRatio;
+
+  const rtiBase = annualInterestCost > 0 ? annualRentIncome / annualInterestCost : 0;
+  const rti70 = annualInterestCost > 0 ? (annualRentIncome * 0.7) / annualInterestCost : 0;
+
+  const rtiValue = estimateMode === 'estimate' ? rti70 : rtiBase;
+  const threshold = rtiType === 'housing' ? 1.25 : 1.50;
+  const typeLabel = rtiType === 'housing' ? '주택임대업' : '비주택임대업';
+  const pass = rtiValue >= threshold;
+
+  const body = document.getElementById('rti-result-body');
+  body.innerHTML = `
+    <div class="result-row"><span class="result-row__label">임대업 유형</span><span class="result-row__value">${typeLabel} (기준 ${threshold}배)</span></div>
+    <div class="result-row"><span class="result-row__label">임대비중</span><span class="result-row__value">${(rentRatio * 100).toFixed(1)}%</span></div>
+    <hr class="result-divider">
+    <div class="result-row"><span class="result-row__label">총 임차보증금</span><span class="result-row__value">${fmt(totalDeposit)}</span></div>
+    <div class="result-row"><span class="result-row__label">월 임대료 합계</span><span class="result-row__value">${fmt(totalMonthlyRent)}</span></div>
+    <div class="result-row"><span class="result-row__label">간주임대료 (보증금×${(baseRate*100).toFixed(2)}%)</span><span class="result-row__value">${fmt(Math.round(totalDeposit * baseRate))}</span></div>
+    <div class="result-row"><span class="result-row__label"><b>연간 임대소득</b></span><span class="result-row__value"><b>${fmt(Math.round(annualRentIncome))}</b></span></div>
+    <hr class="result-divider">
+    <div class="result-row"><span class="result-row__label">총 대출금</span><span class="result-row__value">${fmt(totalLoan)}</span></div>
+    <div class="result-row"><span class="result-row__label">가중평균금리</span><span class="result-row__value">${(weightedRate * 100).toFixed(3)}%</span></div>
+    <div class="result-row"><span class="result-row__label">적용금리 (가중평균+스트레스)</span><span class="result-row__value">${((weightedRate + stressRate) * 100).toFixed(3)}%</span></div>
+    <div class="result-row"><span class="result-row__label"><b>연간 이자비용</b></span><span class="result-row__value"><b>${fmt(Math.round(annualInterestCost))}</b></span></div>
+    <hr class="result-divider">
+    <div class="result-row"><span class="result-row__label">결정 RTI (100%)</span><span class="result-row__value">${rtiBase.toFixed(4)}배</span></div>
+    <div class="result-row"><span class="result-row__label">추정 RTI (70%)</span><span class="result-row__value">${rti70.toFixed(4)}배</span></div>
+    <div class="result-highlight">
+      <div class="result-highlight__label">적용 RTI (${estimateMode === 'estimate' ? '추정 70%' : '결정 100%'})</div>
+      <div class="result-highlight__value ${pass ? '' : 'result-row__value--red'}">${rtiValue.toFixed(4)}배 ${pass ? '✓ 충족' : '✗ 미달'}</div>
+    </div>
+    <div class="disclaimer">운용기준 제8조: ${typeLabel} ${threshold}배 이상 | 예상 수치이며 실제와 다를 수 있습니다.</div>
+  `;
+  document.getElementById('rti-result').style.display = '';
+  addRecentCalc('rti', 'RTI ' + rtiValue.toFixed(2) + '배 (' + (pass ? '충족' : '미달') + ')');
+}
+
 // ── 중도상환수수료 ─────────────────────────────────────
 function calcPrepay() {
   const amount = parseNum('pre-amount');
@@ -1210,8 +1396,9 @@ function calcPrepay() {
   const repayDate = document.getElementById('pre-repay-date').value;
   const feePeriodYears = parseNum('pre-fee-period');
 
-  if (amount <= 0) return showToast('상환금액을 입력해주세요.');
-  if (!loanDate || !repayDate) return showToast('대출일자와 상환일자를 입력해주세요.');
+  if (amount <= 0) return showToast('상환금액을 입력해주세요.', 'pre-amount');
+  if (!loanDate) return showToast('대출일자를 입력해주세요.', 'pre-loan-date');
+  if (!repayDate) return showToast('상환일자를 입력해주세요.', 'pre-repay-date');
 
   const d1 = new Date(loanDate);
   const d2 = new Date(repayDate);
@@ -1251,7 +1438,8 @@ function calcExchange() {
   const fee = parseNum('ex-fee');
   const currency = document.getElementById('ex-currency').value;
 
-  if (foreignAmount <= 0 || appliedRate <= 0) return showToast('외화 금액과 환율을 입력해주세요.');
+  if (foreignAmount <= 0) return showToast('외화 금액을 입력해주세요.', 'ex-amount');
+  if (appliedRate <= 0) return showToast('환율을 입력해주세요.', 'ex-rate');
 
   const effectiveRate = appliedRate * (1 - discount / 100);
   let krwAmount = foreignAmount * effectiveRate;
@@ -1292,9 +1480,10 @@ function calcMortgage() {
   const smallDeposit = parseNum('mort-small-deposit');
   const rateType = getToggle('mort-rate-type');
 
-  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.');
-  if (loanAmount <= 0 || months <= 0) return showToast('대출금액과 기간을 입력해주세요.');
-  if (income <= 0) return showToast('연소득을 입력해주세요.');
+  if (housePrice <= 0) return showToast('담보주택 시세를 입력해주세요.', 'mort-house-price');
+  if (loanAmount <= 0) return showToast('대출금액을 입력해주세요.', 'mort-loan-amount');
+  if (months <= 0) return showToast('대출기간을 입력해주세요.', 'mort-period');
+  if (income <= 0) return showToast('연소득을 입력해주세요.', 'mort-income');
 
   // ─── LTV 한도 ───
   const ltvTable = {
@@ -1600,10 +1789,16 @@ document.getElementById('titleLogo').addEventListener('dblclick', () => {
 
     const keyMap = {
       '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
-      '.':'00','+':'+','-':'-','*':'×','/':'÷',
+      '+':'+','-':'-','*':'×','/':'÷',
       'Enter':'=','=':'=',
       'Escape':'C','Delete':'CE','Backspace':'back'
     };
+    // 텐키 Del(.) → 00, 일반 키보드 . → 소수점
+    if (e.key === '.') {
+      e.preventDefault();
+      calcInput(e.code === 'NumpadDecimal' ? '00' : '.');
+      return;
+    }
     const mapped = keyMap[e.key];
     if (mapped) {
       e.preventDefault();
