@@ -1245,12 +1245,14 @@ function calcDSR() {
 
 // ── RTI (임대업 이자상환비율) ──────────────────────────
 
-// 기존 층 이름에서 숫자를 추출해 가장 큰 값+1을 반환 (없으면 행 개수+1)
+// 지상층: 기존 지상 번호 중 최대값+1 반환
 function getNextRtiFloorName() {
   const rows = document.querySelectorAll('#rti-floors .rti-floor-row');
   let maxNum = 0;
   rows.forEach(row => {
     const name = row.querySelector('.rti-floor-name')?.value || '';
+    // '지하'가 포함되지 않은 N층만 매칭
+    if (name.includes('지하')) return;
     const match = name.match(/(\d+)\s*층/);
     if (match) {
       const n = parseInt(match[1], 10);
@@ -1258,6 +1260,21 @@ function getNextRtiFloorName() {
     }
   });
   return `${maxNum + 1}층`;
+}
+
+// 지하층: 기존 지하 번호 중 최대값+1 반환
+function getNextRtiBasementName() {
+  const rows = document.querySelectorAll('#rti-floors .rti-floor-row');
+  let maxNum = 0;
+  rows.forEach(row => {
+    const name = row.querySelector('.rti-floor-name')?.value || '';
+    const match = name.match(/지하\s*(\d+)\s*층/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  });
+  return `지하${maxNum + 1}층`;
 }
 
 function getNextRtiLoanNumber() {
@@ -1291,19 +1308,28 @@ document.getElementById('rtiAddLoan').addEventListener('click', () => {
   container.appendChild(div);
 });
 
-document.getElementById('rtiAddFloor').addEventListener('click', () => {
-  const nextName = getNextRtiFloorName();
-  const container = document.getElementById('rti-floors');
+function buildRtiFloorRow(name) {
   const div = document.createElement('div');
   div.className = 'rti-floor-row';
   div.innerHTML = `<div class="field-inline">
-    <div class="input-wrap" style="max-width:72px"><input type="text" class="rti-floor-name" placeholder="층" value="${nextName}"></div>
+    <div class="input-wrap" style="max-width:72px"><input type="text" class="rti-floor-name" placeholder="층" value="${name}"></div>
     <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
     <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
     <div class="input-wrap" style="max-width:92px"><input type="text" class="rti-floor-area" placeholder="면적" inputmode="decimal"><span class="input-wrap__suffix">㎡</span></div>
     <button class="btn-remove-row" onclick="this.closest('.rti-floor-row').remove(); updateRtiRentAreaSum();">×</button>
   </div>`;
-  container.appendChild(div);
+  return div;
+}
+
+document.getElementById('rtiAddFloor').addEventListener('click', () => {
+  const container = document.getElementById('rti-floors');
+  container.appendChild(buildRtiFloorRow(getNextRtiFloorName()));
+});
+
+document.getElementById('rtiAddBasement').addEventListener('click', () => {
+  const container = document.getElementById('rti-floors');
+  // 지하는 맨 위에 prepend (지하3층 → 지하2층 → 지하1층 → 1층 순서가 자연스러움)
+  container.insertBefore(buildRtiFloorRow(getNextRtiBasementName()), container.firstChild);
 });
 
 // 층별 면적 입력 시 자동 합계 업데이트
