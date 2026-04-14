@@ -786,9 +786,9 @@
           </div>
         </div>
         <div class="field">
-          <label class="field__label">임대면적</label>
+          <label class="field__label">임대면적 <small style="color:var(--text-sub);font-weight:400">(층별 합계 자동)</small></label>
           <div class="input-wrap">
-            <input type="text" id="rti-rent-area" placeholder="0" inputmode="decimal">
+            <input type="text" id="rti-rent-area" placeholder="0" inputmode="decimal" readonly>
             <span class="input-wrap__suffix">㎡</span>
           </div>
         </div>
@@ -820,13 +820,17 @@
           </div>
         </div>
 
-        <div class="section-header">층별 임대 정보 <button class="btn-add-row" id="rtiAddFloor" title="층 추가">+ 추가</button></div>
+        <div class="section-header">층별 임대 정보
+          <button class="btn-add-row" id="rtiAddBasement" title="지하층 추가">+ 지하</button>
+          <button class="btn-add-row" id="rtiAddFloor" title="지상층 추가">+ 지상</button>
+        </div>
         <div id="rti-floors">
           <div class="rti-floor-row" data-idx="0">
             <div class="field-inline">
-              <div class="input-wrap" style="max-width:80px"><input type="text" class="rti-floor-name" placeholder="층" value="1층"></div>
+              <div class="input-wrap" style="max-width:72px"><input type="text" class="rti-floor-name" placeholder="층" value="1층"></div>
               <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
               <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+              <div class="input-wrap" style="max-width:92px"><input type="text" class="rti-floor-area" placeholder="면적" inputmode="decimal"><span class="input-wrap__suffix">㎡</span></div>
             </div>
           </div>
         </div>
