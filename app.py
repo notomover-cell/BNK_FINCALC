@@ -6,8 +6,13 @@ import subprocess
 import threading
 import time
 import urllib.request
+import ctypes
+from ctypes import wintypes
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from functools import partial
+
+# 창 제목 (index.html <title>과 일치)
+WINDOW_TITLE_KEYWORD = 'BNK 금융계산기'
 
 
 def get_resource_path():
@@ -142,6 +147,78 @@ def find_edge():
     return None
 
 
+def bring_app_to_front():
+    """제목에 WINDOW_TITLE_KEYWORD가 포함된 창을 찾아 최상단으로"""
+    if sys.platform != 'win32':
+        return
+    user32 = ctypes.windll.user32
+    hwnds = []
+
+    EnumWindowsProc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def _enum_proc(hwnd, _):
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        length = user32.GetWindowTextLengthW(hwnd)
+        if length == 0:
+            return True
+        buf = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, buf, length + 1)
+        if WINDOW_TITLE_KEYWORD in buf.value:
+            hwnds.append(hwnd)
+        return True
+
+    user32.EnumWindows(EnumWindowsProc(_enum_proc), 0)
+
+    SW_RESTORE = 9
+    for hwnd in hwnds:
+        # 최소화되어 있으면 복원
+        user32.ShowWindow(hwnd, SW_RESTORE)
+        # AllowSetForegroundWindow 우회 트릭: 현재 포커스 스레드에 attach
+        current_tid = ctypes.windll.kernel32.GetCurrentThreadId()
+        foreground_hwnd = user32.GetForegroundWindow()
+        foreground_tid = user32.GetWindowThreadProcessId(foreground_hwnd, None)
+        if foreground_tid and foreground_tid != current_tid:
+            user32.AttachThreadInput(foreground_tid, current_tid, True)
+            user32.BringWindowToTop(hwnd)
+            user32.SetForegroundWindow(hwnd)
+            user32.AttachThreadInput(foreground_tid, current_tid, False)
+        else:
+            user32.SetForegroundWindow(hwnd)
+
+
+def start_hotkey_listener():
+    """전역 단축키(Ctrl+Shift+B) 등록 — 누르면 창을 최상단으로
+    Win32 RegisterHotKey + 메시지 루프 사용 (외부 의존성 없음)"""
+    if sys.platform != 'win32':
+        return
+
+    MOD_ALT = 0x0001
+    MOD_CONTROL = 0x0002
+    MOD_SHIFT = 0x0004
+    MOD_NOREPEAT = 0x4000
+    WM_HOTKEY = 0x0312
+    VK_B = 0x42
+    HOTKEY_ID = 1
+
+    def _listener():
+        user32 = ctypes.windll.user32
+        # 쓰레드에서 호출 (thread id=0) — 해당 쓰레드 메시지큐에 WM_HOTKEY 전달됨
+        if not user32.RegisterHotKey(None, HOTKEY_ID,
+                                     MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT, VK_B):
+            return  # 등록 실패 (이미 다른 앱이 점유 등)
+        try:
+            msg = wintypes.MSG()
+            while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) != 0:
+                if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
+                    bring_app_to_front()
+        finally:
+            user32.UnregisterHotKey(None, HOTKEY_ID)
+
+    t = threading.Thread(target=_listener, daemon=True)
+    t.start()
+
+
 def main():
     src_dir = get_resource_path()
     port = start_local_server(src_dir)
@@ -171,6 +248,9 @@ def main():
         '--disable-sync',
         f'--user-data-dir={user_data}',
     ])
+
+    # 전역 단축키 등록 (Ctrl+Shift+B로 창 최상단 이동)
+    start_hotkey_listener()
 
     # Edge 프로세스 종료 대기 후 강제 정리
     proc.wait()
