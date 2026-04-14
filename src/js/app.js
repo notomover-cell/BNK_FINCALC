@@ -1245,18 +1245,45 @@ function calcDSR() {
 
 // ── RTI (임대업 이자상환비율) ──────────────────────────
 
-let rtiLoanCount = 1;
-let rtiFloorCount = 1;
+// 기존 층 이름에서 숫자를 추출해 가장 큰 값+1을 반환 (없으면 행 개수+1)
+function getNextRtiFloorName() {
+  const rows = document.querySelectorAll('#rti-floors .rti-floor-row');
+  let maxNum = 0;
+  rows.forEach(row => {
+    const name = row.querySelector('.rti-floor-name')?.value || '';
+    const match = name.match(/(\d+)\s*층/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  });
+  return `${maxNum + 1}층`;
+}
+
+function getNextRtiLoanNumber() {
+  return document.querySelectorAll('#rti-loans .rti-loan-row').length + 1;
+}
+
+// 층별 면적 합계를 상단 임대면적 필드에 반영
+function updateRtiRentAreaSum() {
+  let sum = 0;
+  document.querySelectorAll('#rti-floors .rti-floor-area').forEach(el => {
+    const v = parseFloat(el.value) || 0;
+    sum += v;
+  });
+  const target = document.getElementById('rti-rent-area');
+  if (target) target.value = sum > 0 ? sum.toFixed(2).replace(/\.?0+$/, '') : '';
+}
 
 document.getElementById('rtiAddLoan').addEventListener('click', () => {
-  if (rtiLoanCount >= 9) return;
-  rtiLoanCount++;
+  const loanCount = document.querySelectorAll('#rti-loans .rti-loan-row').length;
+  if (loanCount >= 9) return;
+  const nextNum = getNextRtiLoanNumber();
   const container = document.getElementById('rti-loans');
   const div = document.createElement('div');
   div.className = 'rti-loan-row';
-  div.dataset.idx = rtiLoanCount - 1;
   div.innerHTML = `<div class="field-inline">
-    <label>대출 ${rtiLoanCount}</label>
+    <label>대출 ${nextNum}</label>
     <div class="input-wrap"><input type="text" class="rti-loan-amt" placeholder="금액" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
     <div class="input-wrap" style="max-width:100px"><input type="text" class="rti-loan-rate" placeholder="금리" inputmode="decimal"><span class="input-wrap__suffix">%</span></div>
     <button class="btn-remove-row" onclick="this.closest('.rti-loan-row').remove()">×</button>
@@ -1265,18 +1292,25 @@ document.getElementById('rtiAddLoan').addEventListener('click', () => {
 });
 
 document.getElementById('rtiAddFloor').addEventListener('click', () => {
-  rtiFloorCount++;
+  const nextName = getNextRtiFloorName();
   const container = document.getElementById('rti-floors');
   const div = document.createElement('div');
   div.className = 'rti-floor-row';
-  div.dataset.idx = rtiFloorCount - 1;
   div.innerHTML = `<div class="field-inline">
-    <div class="input-wrap" style="max-width:80px"><input type="text" class="rti-floor-name" placeholder="층" value="${rtiFloorCount}층"></div>
+    <div class="input-wrap" style="max-width:72px"><input type="text" class="rti-floor-name" placeholder="층" value="${nextName}"></div>
     <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
     <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
-    <button class="btn-remove-row" onclick="this.closest('.rti-floor-row').remove()">×</button>
+    <div class="input-wrap" style="max-width:92px"><input type="text" class="rti-floor-area" placeholder="면적" inputmode="decimal"><span class="input-wrap__suffix">㎡</span></div>
+    <button class="btn-remove-row" onclick="this.closest('.rti-floor-row').remove(); updateRtiRentAreaSum();">×</button>
   </div>`;
   container.appendChild(div);
+});
+
+// 층별 면적 입력 시 자동 합계 업데이트
+document.getElementById('rti-floors').addEventListener('input', (e) => {
+  if (e.target.classList.contains('rti-floor-area')) {
+    updateRtiRentAreaSum();
+  }
 });
 
 function resetRTI() {
@@ -1295,12 +1329,11 @@ function resetRTI() {
     <div class="input-wrap" style="max-width:100px"><input type="text" class="rti-loan-rate" placeholder="금리" inputmode="decimal"><span class="input-wrap__suffix">%</span></div>
   </div></div>`;
   document.getElementById('rti-floors').innerHTML = `<div class="rti-floor-row" data-idx="0"><div class="field-inline">
-    <div class="input-wrap" style="max-width:80px"><input type="text" class="rti-floor-name" placeholder="층" value="1층"></div>
+    <div class="input-wrap" style="max-width:72px"><input type="text" class="rti-floor-name" placeholder="층" value="1층"></div>
     <div class="input-wrap"><input type="text" class="rti-floor-deposit" placeholder="보증금" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
     <div class="input-wrap"><input type="text" class="rti-floor-rent" placeholder="월임대료" inputmode="numeric"><span class="input-wrap__suffix">원</span></div>
+    <div class="input-wrap" style="max-width:92px"><input type="text" class="rti-floor-area" placeholder="면적" inputmode="decimal"><span class="input-wrap__suffix">㎡</span></div>
   </div></div>`;
-  rtiLoanCount = 1;
-  rtiFloorCount = 1;
   document.getElementById('rti-result').style.display = 'none';
 }
 
@@ -1310,6 +1343,9 @@ function parseNumFromEl(el) {
 }
 
 function calcRTI() {
+  // 계산 전 층별 면적 합계 동기화
+  updateRtiRentAreaSum();
+
   const rtiType = getToggle('rti-type');
   const totalArea = parseFloat(document.getElementById('rti-total-area').value) || 0;
   const rentArea = parseFloat(document.getElementById('rti-rent-area').value) || 0;
@@ -1339,7 +1375,7 @@ function calcRTI() {
 
   // 유효성 검사
   if (totalArea <= 0) return showToast('총 면적을 입력해주세요.', 'rti-total-area');
-  if (rentArea <= 0) return showToast('임대면적을 입력해주세요.', 'rti-rent-area');
+  if (rentArea <= 0) { showToast('층별 임대면적을 입력해주세요.'); document.querySelector('.rti-floor-area')?.focus(); return; }
   if (totalLoan <= 0) { showToast('대출 정보를 입력해주세요.'); document.querySelector('.rti-loan-amt')?.focus(); return; }
   if (totalDeposit <= 0 && totalMonthlyRent <= 0) { showToast('임대 정보를 입력해주세요.'); document.querySelector('.rti-floor-deposit')?.focus(); return; }
 
