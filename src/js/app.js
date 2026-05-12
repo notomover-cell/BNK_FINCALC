@@ -2333,10 +2333,15 @@ document.getElementById("titleLogo").addEventListener("dblclick", () => {
       Backspace: "back",
       "%": "%",
     };
-    // 텐키 Del(.) → 00, 일반 키보드 . → 소수점
+    // 텐키 Del/. → 00 (NumLock 무관), 일반 키보드 . → 소수점
+    if (e.code === "NumpadDecimal") {
+      e.preventDefault();
+      calcInput("00");
+      return;
+    }
     if (e.key === ".") {
       e.preventDefault();
-      calcInput(e.code === "NumpadDecimal" ? "00" : ".");
+      calcInput(".");
       return;
     }
     const mapped = keyMap[e.key];
