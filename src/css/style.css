@@ -1180,6 +1180,7 @@ html {
   font-weight: 700;
 }
 .calc-btn--equal:hover { background: var(--primary-hover); }
+.calc-btn--w2 { grid-column: span 2; }
 
 /* ===== Toast ===== */
 .toast {
